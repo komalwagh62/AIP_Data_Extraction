@@ -79,6 +79,7 @@ def process_ad_data(urls):
                         if match:
                             latitude_dd = conversionDMStoDD(match.group(1) + match.group(2))
                             longitude_dd = conversionDMStoDD(match.group(3) + match.group(4))
+                            coordinates_dd = f"{longitude_dd} {latitude_dd}"
                             geometry = wkt.loads(f"POINT({longitude_dd} {latitude_dd})")
                             ewkb_geometry = geometry.wkb_hex
 
@@ -88,6 +89,7 @@ def process_ad_data(urls):
                                 identification=data[1],
                                 frequency_and_channel=data[2],
                                 hours_of_operation=data[3],
+                                coordinates_dd = coordinates_dd,
                                 geom=ewkb_geometry,
                                 elevation=data[5],
                                 service_volume_radius=data[6],
@@ -113,7 +115,6 @@ def process_ad_data(urls):
                     # print(del_tags)
                     if len(del_tags) == 0:  # If there is exactly one <del> tag
                      coordinates_text = ' '.join(p_tag.get_text(strip=True) for p_tag in cells[2].find_all('p'))
-                     print(f"Coordinates text: {coordinates_text}")  # Optional verification
                      area_affected_text = ' '.join(p_tag.get_text(strip=True) for p_tag in cells[0].find_all('p'))
                      obstacle_type = cells[1].get_text(strip=True)
                      coordinates_text = ' '.join(p_tag.get_text(strip=True) for p_tag in cells[2].find_all('p'))
@@ -123,6 +124,7 @@ def process_ad_data(urls):
                      lat_lon = match.groups()
                      lat = conversionDMStoDD(lat_lon[0])
                      lon = conversionDMStoDD(lat_lon[1])
+                     coordinates_dd = f"{lon} {lat}"
                      geometry = wkt.loads(f"POINT({lon} {lat})")
 
 
@@ -137,6 +139,7 @@ def process_ad_data(urls):
                         airport_icao=AIRPORT_ICAO,
                         area_affected=area_affected_text,
                         obstacle_type=obstacle_type,
+                        coordinates_dd = coordinates_dd,
                         geom=ewkb_geometry,
                         elevation=elevation,
                         marking_lgt=marking_lgt,
@@ -144,7 +147,6 @@ def process_ad_data(urls):
                     )
                      session.add(aerodrome_obstacle)
                     else:
-                        print("Rty")
                         for del_tag in soup.find_all("del"):
                          del_tag.decompose()
                          for hidden_tag in soup.find_all(class_="AmdtDeletedAIRAC"):
@@ -159,6 +161,7 @@ def process_ad_data(urls):
                             longitude_dd = conversionDMStoDD(match.group(3) + match.group(4))
                             # print("Latitude in Decimal Degrees:", latitude_dd)
                             # print("Longitude in Decimal Degrees:", longitude_dd)
+                            coordinates_dd = f"{longitude_dd} {latitude_dd}"
                             geometry = wkt.loads(f"POINT({longitude_dd} {latitude_dd})")
                             # print(geometry)
                             ewkb_geometry = geometry.wkb_hex
@@ -170,6 +173,7 @@ def process_ad_data(urls):
                         airport_icao = AIRPORT_ICAO,
                         area_affected=row_data[0],
                         obstacle_type=row_data[1],
+                        coordinates_dd = coordinates_dd,
                         geom=ewkb_geometry,
                         elevation=row_data[3],
                         marking_lgt=row_data[4],
@@ -237,6 +241,7 @@ def process_ad_data(urls):
                     if thr_lat and thr_lon:
                             thr_lat_dd = conversionDMStoDD(thr_lat)
                             thr_lon_dd = conversionDMStoDD(thr_lon)
+                            coordinates_geom_threshold_dd =  f"{thr_lon_dd} {thr_lat_dd}"
                             geometry = wkt.loads(f"POINT({thr_lon_dd} {thr_lat_dd})")
                             ewkb_geometry = geometry.wkb_hex
 
@@ -244,13 +249,14 @@ def process_ad_data(urls):
                     if rwy_end_lat and rwy_end_lon:
                             rwy_end_lat_dd = conversionDMStoDD(rwy_end_lat)
                             rwy_end_lon_dd = conversionDMStoDD(rwy_end_lon)
+                            coordinates_geom_runway_end_dd = f"{rwy_end_lon_dd} {rwy_end_lat_dd}"
                             geometry = wkt.loads(f"POINT({rwy_end_lon_dd} {rwy_end_lat_dd})")
                             ewkb_geometry1 = geometry.wkb_hex
                     else:
                         ewkb_geometry1 = None
                     
                     # Use the same coordinates as threshold if end coordinates are missing
-                    processed_data.append((designation, true_bearing, dimensions, strength_pavement,associated_data,surface_of_runway,associated_stopways,ewkb_geometry, ewkb_geometry1))
+                    processed_data.append((designation, true_bearing, dimensions, strength_pavement,associated_data,surface_of_runway,associated_stopways,coordinates_geom_threshold_dd,ewkb_geometry,coordinates_geom_runway_end_dd, ewkb_geometry1))
                     
             second_table = []
             printed_rows = set()
@@ -321,19 +327,21 @@ def process_ad_data(urls):
                         associated_data=data[4] if data[4] != 'None' else '',
                         surface_of_runway=data[5] ,
                         associated_stopways=data[6],
-                        geom_threshold=data[7] if data[7] != 'None' else None,
-                        geom_runway_end=data[8] if data[8] != 'None' else None,
-                        thr_elevation=data[9] if data[9] != 'None' else None,
-                        tdz_of_precision=data[10] if data[10] != 'None' else None,
-                        slope_of_runway=data[11] if data[11] != 'None' else None,
-                        dimension_of_stopway=data[12] if data[12] != 'None' else None,
-                        dimension_of_clearway=data[13] if data[13] != 'None' else None,
-                        dimension_of_strips=data[14] if data[14] != 'None' else None,
-                        dimension_of_runway=data[15] if data[15] != 'None' else None,
-                        location=data[16] if data[16] != 'None' else None,
-                        description_of_arresting_system=data[17],
-                        existence_of_obstacle=data[18] if data[18] != 'None' else None,
-                        remarks=data[19] if data[19] != 'None' else None
+                        coordinates_geom_threshold_dd = data[7] if data[7] != 'None' else None,
+                        geom_threshold=data[8] if data[8] != 'None' else None,
+                        coordinates_geom_runway_end_dd = data[9] if data[9] != 'None' else None,
+                        geom_runway_end=data[10] if data[10] != 'None' else None,
+                        thr_elevation=data[11] if data[11] != 'None' else None,
+                        tdz_of_precision=data[12] if data[12] != 'None' else None,
+                        slope_of_runway=data[13] if data[13] != 'None' else None,
+                        dimension_of_stopway=data[14] if data[14] != 'None' else None,
+                        dimension_of_clearway=data[15] if data[15] != 'None' else None,
+                        dimension_of_strips=data[16] if data[16] != 'None' else None,
+                        dimension_of_runway=data[17] if data[17] != 'None' else None,
+                        location=data[18] if data[18] != 'None' else None,
+                        description_of_arresting_system=data[19],
+                        existence_of_obstacle=data[20] if data[20] != 'None' else None,
+                        remarks=data[21] if data[21] != 'None' else None
                     )
                     
                 session.add(runway_char)   

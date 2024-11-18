@@ -341,11 +341,13 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             )[0]
             lat = conversionDMStoDD(lat_value + lat_dir)
             lng = conversionDMStoDD(lng_value + lng_dir)
+            coordinates = f"{lat} {lng}"
             # If the waypoint doesn't exist, add it to the database
             if not waypoint1:
                 new_waypoint = Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=waypoint.strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
                 )
                 session.add(new_waypoint)
@@ -416,6 +418,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+            coordinates = f"{lat1} {lng1}"
             # These lines query the database to check if a waypoint with the same name and airport ICAO code already exists.
             waypoint1 = (
                 session.query(Waypoint)
@@ -431,6 +434,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                     Waypoint(
                         airport_icao=AIRPORT_ICAO,
                         name=waypoint_name1,
+                        coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
                     )
                 )
@@ -554,6 +558,7 @@ def main():
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+            coordinates = f"{lat1} {lng1}"
             # These lines query the database to check if a waypoint with the same name and airport ICAO code already exists.
             waypoint1 = (
                 session.query(Waypoint)
@@ -569,6 +574,7 @@ def main():
                     Waypoint(
                         airport_icao=AIRPORT_ICAO,
                         name=waypoint_name1,
+                        coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
                     )
                 )
@@ -584,6 +590,7 @@ def main():
                 lat_dir2, lat_value2, lng_dir2, lng_value2 = extracted_data2
                 lat2 = conversionDMStoDD(lat_value2 + lat_dir2)
                 lng2 = conversionDMStoDD(lng_value2 + lng_dir2)
+                coordinates = f"{lat2} {lng2}"
                 waypoint2 = (
                     session.query(Waypoint)
                     .filter(
@@ -597,6 +604,7 @@ def main():
                         Waypoint(
                             airport_icao=AIRPORT_ICAO,
                             name=waypoint_name2,
+                            coordinates_dd = coordinates,
                             geom=f"POINT({lng2} {lat2})",
                         )
                     )

@@ -118,11 +118,12 @@ def main():
         lat_lon = match.groups()
         lat = conversionDMStoDD(lat_lon[0])
         lon = conversionDMStoDD(lat_lon[1])
-        
+        coordinates = f"{lat} {lon}"
         session.add(
             Waypoint(
                 airport_icao=AIRPORT_ICAO,
                 name=waypoint_name,
+                coordinates_dd = coordinates,
                 geom=f"POINT({lon} {lat})",
             )
         )

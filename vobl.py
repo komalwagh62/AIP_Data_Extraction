@@ -173,10 +173,12 @@ def extract_insert_apch(file_name):
             lat = lat[1] + lat[0]
             lng = lng[1] + lng[0]
             lat, lng = conversionDMStoDD(lat), conversionDMStoDD(lng)
+            coordinates = f"{lat} {lng}"
             session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=row[0].strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
                 )
             )
@@ -268,10 +270,12 @@ def main():
             lat = lat[1] + lat[0]
             lng = lng[1] + lng[0]
             lat, lng = conversionDMStoDD(lat), conversionDMStoDD(lng)
+            coordinates = f"{lat} {lng}"
             session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=row[0].strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
                 )
             )

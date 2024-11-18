@@ -1,5 +1,10 @@
 from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding, session
 from sqlalchemy import select
+from pyproj import Proj, transform
+
+utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
+wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
+
 ##################
 # EXTRACTOR CODE #
 ##################
@@ -152,13 +157,15 @@ def main():
                         lat1 = conversionDMStoDD(row[2])
                        
                         lng1 = conversionDMStoDD(row[3])
-                        print(lat1)
-                        print(lng1)
+                        
+                        longitude, latitude = transform(utm_proj, wgs84_proj, lat1, lng1)
+                        coordinates = f"{latitude} {longitude}"
                         session.add(
                             Waypoint(
                                 airport_icao=AIRPORT_ICAO,
                                 name=row[0].strip(),
                                 type=row[1].strip(),
+                                coordinates_dd = coordinates,
                                 geom=f"POINT({lng1} {lat1})",
                             )
                         )

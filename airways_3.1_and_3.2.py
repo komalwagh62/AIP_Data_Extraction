@@ -522,12 +522,12 @@ def main():
             if navigation_url:
                 enr_3_1_urls, enr_3_2_urls = search_and_print_enr_links(navigation_url, processed_urls_file)
                 # Here you would process ENR 3.1 and 3.2 URLs
-                process_routes(enr_3_1_urls)  # Process ENR 3.1 links
-                process_routes(enr_3_2_urls)  # Process ENR 3.2 links
-                process_lines(enr_3_1_urls)
-                process_lines(enr_3_2_urls)
+                # process_routes(enr_3_1_urls)  # Process ENR 3.1 links
+                # process_routes(enr_3_2_urls)  # Process ENR 3.2 links
+                # process_lines(enr_3_1_urls)
+                # process_lines(enr_3_2_urls)
                 process_convline(enr_3_1_urls)
-                process_nonconv(enr_3_2_urls)
+                # process_nonconv(enr_3_2_urls)
 
         
 if __name__ == "__main__":

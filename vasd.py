@@ -139,10 +139,12 @@ def main():
                         lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                         print(lat1)
                         lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+                        coordinates = f"{lat1} {lng1}"
                         waypoint = Waypoint(
                             airport_icao=AIRPORT_ICAO,
                             type=waypoint_type,  # Set the "type" here
                             name=waypoint_name,
+                            coordinates_dd = coordinates,
                             geom=f"POINT({lng1} {lat1})",
                         )
                         session.add(waypoint)
@@ -157,9 +159,11 @@ def main():
                         lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                         # print(lat1)
                         lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+                        coordinates = f"{lat1} {lng1}"
                         waypoint = Waypoint(
                             airport_icao=AIRPORT_ICAO,
                             name=waypoint_name,
+                            coordinates_dd = coordinates,
                             geom=f"POINT({lng1} {lat1})",
                         )
                         session.add(waypoint)

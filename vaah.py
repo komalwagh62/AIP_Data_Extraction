@@ -1,5 +1,6 @@
 from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding, session
 from sqlalchemy import select
+from pyproj import Proj, transform
 ##################
 # EXTRACTOR CODE #
 ##################
@@ -11,6 +12,8 @@ import re
 AIRPORT_ICAO = "VAAH"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
+utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
+wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
 
 def conversionDMStoDD(coord):
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -71,31 +74,28 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     ]
     for _, row in apch_data_df_waypoint.iterrows():
         row = list(row)
-        print(row)
+        
         if row[1] == "":
             vals = row[0].split()
-            
             row[0] = vals[0]
             row[1] = vals[1]
             vals = row[2].split()
             row[2] = vals[0]
-            
             row[3] = vals[1]
-        print(row[2])
-        print(row[3])
-
-
+            
         latitude = conversionDMStoDD(row[2])
         longitude = conversionDMStoDD(row[3])
+        # Ensure coordinates are in correct format
+        longitude, latitude = transform(utm_proj, wgs84_proj, latitude, longitude)
+        coordinates = f"{latitude} {longitude}"
         waypoint_obj = Waypoint(
             airport_icao=AIRPORT_ICAO,
             name=row[0],
             type=row[1],
+            coordinates_dd = coordinates,
             geom=f"POINT({longitude} {latitude})",
         )
         session.add(waypoint_obj)
-
-
     procedure_name = (
         re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
     )

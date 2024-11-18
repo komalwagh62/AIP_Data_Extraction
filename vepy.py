@@ -167,12 +167,13 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                 lat_dir, lat_value, lng_dir, lng_value = matches[0]
                 lat = conversionDMStoDD(lat_value + lat_dir)
                 lng = conversionDMStoDD(lng_value + lng_dir)
-
+            coordinates = f"{lat} {lng}"
             # If the waypoint doesn't exist, add it to the database
             if not waypoint1:
                 new_waypoint = Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=waypoint.strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
                 )
                 session.add(new_waypoint)
@@ -241,10 +242,12 @@ def main():
                         lat = conversionDMStoDD(lat_dir + lat)
                             
                         lng = conversionDMStoDD(lng_dir + lng)
+                        coordinates = f"{lat} {lng}"
                         session.add(
                                 Waypoint(
                                     airport_icao=AIRPORT_ICAO,
                                     name=row[0].strip(),
+                                    coordinates_dd = coordinates,
                                     geom=f"POINT({lng} {lat})",
                                 )
                             )

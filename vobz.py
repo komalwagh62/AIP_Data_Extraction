@@ -79,10 +79,12 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+            coordinates = f"{lat1} {lng1}"
             session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=row[0].strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng1} {lat1})",
                 )
             )

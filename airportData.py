@@ -114,6 +114,7 @@ def fetch_airports_details(airport_url):
                             if match:
                                 latitude_dd = conversionDMStoDD(match.group(1) + match.group(2))
                                 longitude_dd = conversionDMStoDD(match.group(3) + match.group(4))
+                                coordinates_dd = f"{longitude_dd} {latitude_dd}"
                                 geometry = wkt.loads(f"POINT({longitude_dd} {latitude_dd})")
                                 ewkb_geometry = geometry.wkb_hex
                         
@@ -135,17 +136,18 @@ def fetch_airports_details(airport_url):
                             # Add to database if all data points are available
                     
                             print("yghbjn")
-                            restricted_airspace = AirportData(
+                            airport_data = AirportData(
                                     ICAOCode=icao_code,
                                     airport_name=airport_name,
                                     coordinate=coordinates,
+                                    coordinates_dd = coordinates_dd,
                                     geom=ewkb_geometry,
                                     distance=distance,
                                     aerodrome_elevation=aerodrome_elevation,
                                     magnetic_variation=magnetic_variation
                                 )
-                            session.add(restricted_airspace)
-                            print(restricted_airspace)
+                            session.add(airport_data)
+                            print(airport_data)
                             session.commit()
                             return  # Exit after saving data
 

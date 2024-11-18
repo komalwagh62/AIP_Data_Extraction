@@ -59,10 +59,12 @@ def extract_insert_apch(file_name):
         lat_long = re.sub(r"[^NEWS\d. ]", "", lat_long).split()
         lat, long = lat_long[1] + lat_long[0], lat_long[3] + lat_long[2]
         lat, long = conversionDMStoDD(lat), conversionDMStoDD(long)
+        coordinates = f"{lat} {long}"
         session.add(
             Waypoint(
                 airport_icao=AIRPORT_ICAO,
                 name=name,
+                coordinates_dd = coordinates,
                 geom=f"POINT({long} {lat})",
             )
         )

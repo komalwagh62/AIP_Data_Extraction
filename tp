@@ -1,0 +1,70 @@
+[<tr class="Table-row-type-3"><th colspan="2" rowspan="2">{RNP Type}</th><th>Track MAG</th><th rowspan="2">Dist (NM)</th><th rowspan="2">(COP)</th><th rowspan="2"><div class="UpperAndLower"><table><tbody><tr><td class="Upper">Upper limit</td></tr><tr><td class="Lower">Lower limit</td></tr></tbody></table></div></th><th rowspan="2">Minimum flight altitude</th><th rowspan="2">Lateral limits (NM)</th><th colspan="2">FL series</th><th rowspan="2">Controlling unit {Airspace class} Remarks</th></tr>, <tr class="Table-row-type-3"><th><div class="UpperAndLower"><table><tbody><tr><td class="Upper"> ↓ </td></tr><tr><td class="Lower"> ↑ </td></tr></tbody></table></div></th><th> ↓ </th><th> ↑ </th></tr>, <tr class="Table-row-type-3" id="ID_1047573"><td colspan="2"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span id="ID_1047583">
+<span class="SD" id="ID_1047585">030</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_MAG_TRACK;1141</span>°</span></td></tr><tr><td class="Lower"><span id="ID_1047586">
+<span class="SD" id="ID_1047588">210</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_REVERSE_MAG_TRACK;1141</span>°</span></td></tr></tbody></table></div></td><td align="center"><span id="ID_1432427">
+<span class="SD" id="ID_1432430">30.0</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_LEN;1141</span>
+<span class="SD" id="ID_1432432"> NM</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST;1141</span>
+</span></td><td align="center"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span>
+<span class="SD" id="ID_1047597">FL </span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_UPPER;1141</span>
+<span class="SD" id="ID_1047599">460</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_UPPER;1141</span>
+</span></td></tr><tr><td class="Lower"><span>
+<span class="SD" id="ID_1047602">4 500</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_LOWER;1141</span>
+<span class="SD" id="ID_1047604"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_LOWER;1141</span>
+<span class="SD" id="ID_1047606"></span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_DIST_VER_LOWER;1141</span>
+</span></td></tr></tbody></table></div></td><td align="center"><p class="line">
+<span class="SD" id="ID_1047612">5 000</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_MNM;1141</span>
+<span class="SD" id="ID_1047614"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_MNM;1141</span>
+</p></td><td><span>
+<span class="SD" id="ID_1047617">10</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_WID_LEFT;1141</span>
+</span></td><td><span>Even<acronym class="Note" title="Route availability: H24">(1) </acronym></span></td><td> </td><td><p class="line">[Class <span class="SD" id="ID_1047609">A</span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_CLASS;1141</span>]</p></td></tr>, <tr class="Table-row-type-3" id="ID_1432439"><td colspan="2"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span id="ID_1432449">
+<span class="SD" id="ID_1432451">030</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_MAG_TRACK;1335</span>°</span></td></tr><tr><td class="Lower"><span id="ID_1432452">
+<span class="SD" id="ID_1432454">210</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_REVERSE_MAG_TRACK;1335</span>°</span></td></tr></tbody></table></div></td><td align="center"><span id="ID_1432455">
+<span class="SD" id="ID_1432457">2.0</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_LEN;1335</span>
+<span class="SD" id="ID_1432459"> NM</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST;1335</span>
+</span></td><td align="center"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span>
+<span class="SD" id="ID_1047597">FL </span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_UPPER;1141</span>
+<span class="SD" id="ID_1047599">460</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_UPPER;1141</span>
+</span></td></tr><tr><td class="Lower"><span>
+<span class="SD" id="ID_1047602">4 500</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_LOWER;1141</span>
+<span class="SD" id="ID_1047604"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_LOWER;1141</span>
+<span class="SD" id="ID_1047606"></span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_DIST_VER_LOWER;1141</span>
+</span></td></tr></tbody></table></div></td><td align="center"><p class="line">
+<span class="SD" id="ID_1047612">5 000</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_MNM;1141</span>
+<span class="SD" id="ID_1047614"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_MNM;1141</span>
+</p></td><td><span>
+<span class="SD" id="ID_1047617">10</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_WID_LEFT;1141</span>
+</span></td><td><span>Even<acronym class="Note" title="Route availability: H24">(1) </acronym></span></td><td> </td><td><p class="line">[Class <span class="SD" id="ID_1047609">A</span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_CLASS;1141</span>]</p></td></tr>, <tr class="Table-row-type-3" id="ID_1047626"><td colspan="2"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span id="ID_1432460">
+<span class="SD" id="ID_1432463">031</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_MAG_TRACK;1142</span>°</span></td></tr><tr><td class="Lower"><span id="ID_1432464">
+<span class="SD" id="ID_1432467">211</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_REVERSE_MAG_TRACK;1142</span>°</span></td></tr></tbody></table></div></td><td align="center"><span id="ID_1047642">
+<span class="SD" id="ID_1047644">8.0</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_LEN;1142</span>
+<span class="SD" id="ID_1047646"> NM</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST;1142</span>
+</span></td><td align="center"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span>
+<span class="SD" id="ID_1047650">FL </span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_UPPER;1142</span>
+<span class="SD" id="ID_1047652">460</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_UPPER;1142</span>
+</span></td></tr><tr><td class="Lower"><span>
+<span class="SD" id="ID_1047655">6 500</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_LOWER;1142</span>
+<span class="SD" id="ID_1047657"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_LOWER;1142</span>
+<span class="SD" id="ID_1047659"></span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_DIST_VER_LOWER;1142</span>
+</span></td></tr></tbody></table></div></td><td align="center"><p class="line">
+<span class="SD" id="ID_1047665">7 000</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_MNM;1142</span>
+<span class="SD" id="ID_1047667"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_MNM;1142</span>
+</p></td><td><span>
+<span class="SD" id="ID_1047617">10</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_WID_LEFT;1141</span>
+</span></td><td><span>Even<acronym class="Note" title="Route availability: H24">(1) </acronym></span></td><td> </td><td><p class="line">[Class <span class="SD" id="ID_1047662">A</span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_CLASS;1142</span>]</p></td></tr>, <tr class="Table-row-type-3" id="ID_1047673"><td colspan="2"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span id="ID_1432468">
+<span class="SD" id="ID_1432471">031</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_MAG_TRACK;1143</span>°</span></td></tr><tr><td class="Lower"><span id="ID_1432472">
+<span class="SD" id="ID_1432475">211</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_REVERSE_MAG_TRACK;1143</span>°</span></td></tr></tbody></table></div></td><td align="center"><span id="ID_1047689">
+<span class="SD" id="ID_1047691">14.0</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_LEN;1143</span>
+<span class="SD" id="ID_1047693"> NM</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST;1143</span>
+</span></td><td align="center"> </td><td align="center"><div class="UpperAndLower"><table><tbody><tr><td class="Upper"><span>
+<span class="SD" id="ID_1047650">FL </span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_UPPER;1142</span>
+<span class="SD" id="ID_1047652">460</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_UPPER;1142</span>
+</span></td></tr><tr><td class="Lower"><span>
+<span class="SD" id="ID_1047655">6 500</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_LOWER;1142</span>
+<span class="SD" id="ID_1047657"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_LOWER;1142</span>
+<span class="SD" id="ID_1047659"></span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_DIST_VER_LOWER;1142</span>
+</span></td></tr></tbody></table></div></td><td align="center"><p class="line">
+<span class="SD" id="ID_1047665">7 000</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_DIST_VER_MNM;1142</span>
+<span class="SD" id="ID_1047667"> FT</span><span class="sdParams" style="display: none;">TRTE_SEG;UOM_DIST_VER_MNM;1142</span>
+</p></td><td><span>
+<span class="SD" id="ID_1047617">10</span><span class="sdParams" style="display: none;">TRTE_SEG;VAL_WID_LEFT;1141</span>
+</span></td><td><span>Even<acronym class="Note" title="Route availability: H24">(1) </acronym></span></td><td> </td><td><p class="line">[Class <span class="SD" id="ID_1047662">A</span><span class="sdParams" style="display: none;">TRTE_SEG;CODE_CLASS;1142</span>]</p></td></tr>]
+PS C:\Users\LENOVO\Desktop\ANS_Register_Extraction\AIP_Data_Extraction> 

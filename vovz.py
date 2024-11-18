@@ -1,10 +1,14 @@
 import camelot
 import re
 import os
-
+from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
+from pyproj import Proj, transform
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
+
+utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
+wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
+
 AIRPORT_ICAO = "VOVZ"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
@@ -63,10 +67,13 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 lng_value, lng_dir = lng_match.groups()
                 lat1 = conversionDMStoDD(lat_value + lat_dir)
                 lng1 = conversionDMStoDD(lng_value + lng_dir)
+                longitude, latitude = transform(utm_proj, wgs84_proj, lat1, lng1)
+                coordinates = f"{latitude} {longitude}"
                 session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=row[0].strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng1} {lat1})",
                 )
             )

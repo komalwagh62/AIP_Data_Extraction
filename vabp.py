@@ -1,6 +1,6 @@
 from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding, session
 from sqlalchemy import select
-
+from pyproj import Proj, transform
 
 ##################
 # EXTRACTOR CODE #
@@ -9,6 +9,8 @@ import camelot
 import os
 import re
 
+utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
+wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
 
 AIRPORT_ICAO = "VABP"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -83,10 +85,14 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         # print(row)
         latitude = conversionDMStoDD(row[2])
         longitude = conversionDMStoDD(row[3])
+        longitude, latitude = transform(utm_proj, wgs84_proj, latitude, longitude)
+        coordinates = f"{latitude} {longitude}"
+                        
         waypoint_obj = Waypoint(
             airport_icao=AIRPORT_ICAO,
             name=row[0],
             type=row[1],
+            coordinates_dd = coordinates,
             geom=f"POINT({longitude} {latitude})",
         )
         session.add(waypoint_obj)

@@ -81,11 +81,13 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
                 lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                 lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+                coordinates = f"{lat1} {lng1}"
                 session.add(
                     Waypoint(
                         airport_icao=AIRPORT_ICAO,
                         type=row[0].strip(),
                         name=row[1].strip(),
+                        coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
                     )
                 )
@@ -117,9 +119,11 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
                 lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                 lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+                coordinates = f"{lat1} {lng1}"
                 waypoint = Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=waypoint_name,
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng1} {lat1})",
                 )
                 session.add(waypoint)
@@ -370,12 +374,14 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
             lat = conversionDMStoDD(lat_value + lat_dir)
             # print(lat)
             lng = conversionDMStoDD(lng_value + lng_dir)
+            coordinates = f"{lat} {lng}"
             # If the waypoint doesn't exist, add it to the database
             if not waypoint1:
                 new_waypoint = Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=waypoint.strip(),
                     type=type.strip(),
+                    coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
                 )
                 session.add(new_waypoint)

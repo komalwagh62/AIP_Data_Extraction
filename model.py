@@ -32,6 +32,7 @@ class Waypoint(Base):
     id = Column(Integer, primary_key=True)
     airport_icao = Column(VARCHAR(4), nullable=False)
     name = Column(VARCHAR(50), nullable=False)
+    coordinates_dd = Column(VARCHAR(500), nullable=False)
     geom = Column(Geometry(geometry_type="POINT"), nullable=False)
     type = Column(VARCHAR(100),nullable=True)
     navaid = Column(VARCHAR(50), nullable=True)
@@ -97,6 +98,7 @@ class Aerodrome_Obstacle(Base):
     airport_icao = Column(String(5),nullable=False)
     area_affected = Column(String(1000), nullable=False)
     obstacle_type = Column(String(100), nullable=False)
+    coordinates_dd = Column(VARCHAR(500), nullable=False)
     geom = Column(Geometry(geometry_type="POINT"), nullable=False)
     elevation = Column(String(100), nullable=False)
     marking_lgt = Column(String(100), nullable=False)  
@@ -111,6 +113,7 @@ class Navaids(Base):
     identification = Column(String(50),nullable=False)
     frequency_and_channel = Column(String(100),nullable=False)
     hours_of_operation = Column(String(100),nullable=False)
+    coordinates_dd = Column(VARCHAR(500), nullable=False)
     geom = Column(Geometry(geometry_type="POINT"), nullable=False)
     elevation = Column(String(500),nullable=False)  # Elevation of transmitting antenna
     service_volume_radius = Column(String(500),nullable=False)  # Service volume radius
@@ -196,6 +199,7 @@ class SignificantPoints(Base):
     
     id = Column(Integer, primary_key=True)
     waypoints = Column(String(255), nullable=False)
+    coordinates_dd = Column(VARCHAR(500), nullable=False)
     geom = Column(Geometry(geometry_type="POINT"), nullable=False)
     name_of_routes = Column(String(255))
 
@@ -229,11 +233,12 @@ class LineSegment(Base):
     route_id =Column(ForeignKey("route.id"))
     
     routes = relationship("Route")
-  
+   # J1ZasnIPyZ7CGAgUP88S
 # Conventional AWYs Data from ENR 3.1 & 3.2 geosjon  
 class ConvLineData(Base):
     __tablename__ = 'convlinedata'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
     airway_id = Column(String(255)) 
     start_point = Column(String(255))
     start_point_geom = Column(String(255))  # Change Geometry type to POINT
@@ -290,19 +295,7 @@ class ControlAirspace(Base):
     UC_AirspacePolygon = Column(String(100000), nullable=False)
     geom = Column(Geometry('POLYGON', srid=4326), nullable=True)
     
-# Control Airspace data from geojson
-class ControlledAirspace(Base):
-    __tablename__ = 'controlledairspace'
-     
-    id = Column(Integer, primary_key=True)
-    ICAOCode = Column(String(20), nullable=False)
-    AirspaceType = Column(String(20), nullable=False)
-    AirspaceCenter = Column(String(10000), nullable=False) 
-    ControlledAirspaceName = Column(String(500), nullable=False)
-    LowerLimit=Column(String(255), nullable=False)
-    UpperLimit=Column(String(255), nullable=False)
-    UC_AirspacePolygon = Column(String(100000), nullable=False)
-    geom = Column(Geometry('POLYGON', srid=4326), nullable=True)
+
 
 # Airport Data Extract from Aerodromes AD
 class AirportData(Base):
@@ -311,6 +304,7 @@ class AirportData(Base):
     ICAOCode = Column(String(10), nullable=False)
     airport_name = Column(String(500), nullable=False)
     coordinate = Column(String(500), nullable=False)
+    coordinates_dd = Column(VARCHAR(500), nullable=False)
     geom = Column(Geometry(geometry_type="POINT"), nullable=False)
     distance = Column(String(500), nullable=False)
     aerodrome_elevation =Column(String(500), nullable=False)
@@ -329,7 +323,9 @@ class RunwayCharacterstics(Base):
     associated_data = Column(String(255), nullable=False)
     surface_of_runway = Column(String(255), nullable=False)
     associated_stopways = Column(String(255), nullable=False)
-    geom_threshold = Column(Geometry(geometry_type="POINT"))  
+    coordinates_geom_threshold_dd = Column(VARCHAR(500), nullable=False)
+    geom_threshold = Column(Geometry(geometry_type="POINT")) 
+    coordinates_geom_runway_end_dd = Column(String(500), nullable=False)
     geom_runway_end = Column(Geometry(geometry_type="POINT"))
     thr_elevation = Column(String(255), nullable=False)
     tdz_of_precision = Column(String(255), nullable=False)
@@ -414,6 +410,52 @@ class AirTrafficServicesCommunicationFacilities(Base):
     logon_address = Column(String(255), nullable=False)
     hours_of_operation = Column(String(255), nullable=False)
     remarks = Column(String(2000), nullable=False)
+    
+    
+# Thailand Conv line data
+class ThailandConvLineData(Base):
+    __tablename__ = 'thailandconvlinedata'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    airway_id = Column(String(255)) 
+    start_point = Column(String(255))
+    start_point_geom = Column(String(255))  # Change Geometry type to POINT
+    end_point = Column(String(255)) 
+    end_point_geom = Column(String(255))  # Change Geometry type to POINT
+    track_magnetic = Column(String(255)) 
+    reverse_magnetic = Column(String(255))
+    radial_distance = Column(String(255))
+    upper_limit = Column(String(255))
+    lower_limit = Column(String(255))
+    min_flight_altitude = Column(String(255))
+    lateral_limits = Column(String(255))
+    direction_of_cruising_levels = Column(String(255))
+    geomcolumn = Column(Geometry)
+    type = Column(VARCHAR(20), nullable=False)
+    remarks = Column(String(2000))
+    
+    
+class ThailandNonConvLineData(Base):
+    __tablename__ = 'thailandnonconvlinedata'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    airway_id = Column(String(255)) 
+    start_point = Column(String(255))
+    start_point_geom = Column(String(255))  # Change Geometry type to POINT
+    end_point = Column(String(255)) 
+    end_point_geom = Column(String(255))  # Change Geometry type to POINT
+    track_magnetic = Column(String(255)) 
+    reverse_magnetic = Column(String(255))
+    radial_distance = Column(String(255))
+    upper_limit = Column(String(255))
+    lower_limit = Column(String(255))
+    # min_flight_altitude = Column(String(255))
+    # lateral_limits = Column(String(255))
+    direction_of_cruising_levels = Column(String(255))
+    geomcolumn = Column(Geometry)
+    type = Column(VARCHAR(20), nullable=False)
+    remarks = Column(String(2000))
+    
+
+
     
 # Create the tables in the database
 Base.metadata.create_all(engine)

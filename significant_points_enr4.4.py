@@ -56,12 +56,14 @@ def process_waypoints(urls):
                         try:
                             latitude_dd = conversionDMStoDD(match.group(1))
                             longitude_dd = conversionDMStoDD(match.group(2))
+                            coordinates_dd = f"{longitude_dd} {latitude_dd}"
                             geometry = wkt.loads(f"POINT({longitude_dd} {latitude_dd})")
                             ewkb_geometry = geometry.wkb_hex
 
                             # Create a new SignificantPoints object
                             new_waypoint = SignificantPoints(
                                 waypoints=waypoints,
+                                coordinates_dd = coordinates_dd,
                                 geom=ewkb_geometry,
                                 name_of_routes=name_of_routes
                             )
