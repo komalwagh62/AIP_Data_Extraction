@@ -8,10 +8,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VAUD"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -106,7 +103,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         row = list(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
-            print(row)
             if is_valid_data(row[2]):
                 waypoint_name = row[2].strip().replace("\n", "").replace(" ", "")
                 waypoint_obj = (
@@ -114,15 +110,18 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+            course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+            angles = course_angle.split()
+                        # Check if we have exactly two angle values
+            if len(angles) == 2:
+                course_angle = f"{angles[0]}({angles[1]})"
+                print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=row[0],
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
-                course_angle=row[4]
-                .replace("\n", "")
-                .replace("  ", "")
-                .replace(" )", ")"),
+                course_angle=course_angle,
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                 altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
                 speed_limit=row[8].strip() if is_valid_data(row[8]) else None,

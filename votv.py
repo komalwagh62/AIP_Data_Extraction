@@ -112,7 +112,7 @@ def extract_insert_apch(file_name):
             seq_num=row[0],
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")"),
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
             speed_limit=row[7].strip() if is_valid_data(row[7]) else None,

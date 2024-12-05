@@ -103,7 +103,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_name = row[2].strip().replace("\n", "").replace(" ", "")
         if is_valid_data(waypoint_name):
             waypoint_obj = session.query(Waypoint).filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name).first()
-
+        
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=row[0],

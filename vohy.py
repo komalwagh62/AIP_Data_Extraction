@@ -11,10 +11,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VOHY"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -55,11 +52,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
             row = [x for x in row if x.strip()]
 
             waypoint_name1 = row[1].strip()
-            print(waypoint_name1)
             if len(row) < 3:
                 continue
             result_row = session.execute(
@@ -109,7 +104,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
 
     for _, row in apch_data_df.iterrows():
         row = list(row)
-        # print(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
             if is_valid_data(row[2]):
@@ -119,15 +113,18 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+            course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+            angles = course_angle.split()
+            # Check if we have exactly two angle values
+            if len(angles) == 2:
+                course_angle = f"{angles[0]}({angles[1]})"
+            
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=row[0],
                 waypoint=waypoint_obj,
                 path_descriptor=row[3].strip(),
-                course_angle=row[4]
-                .replace("\n", "")
-                .replace("  ", "")
-                .replace(" )", ")"),
+                course_angle=course_angle,
                 turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
            
                 altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,

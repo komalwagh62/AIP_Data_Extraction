@@ -1,0 +1,2 @@
+url_extraction.py:https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 2.1-en-GB.html
+url_extraction.py:https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html

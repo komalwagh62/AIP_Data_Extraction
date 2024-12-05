@@ -123,8 +123,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             )
             course_angle = None
             if is_valid_data(row[8]) and is_valid_data(row[9]):
-             course_angle = f"{row[8]} ({row[9]})"
-            # print(course_angle)
+             course_angle = f"{row[8]}({row[9]})"
+            #  print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=row[0].strip(),
@@ -176,6 +176,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .first()
             )
             # print(waypoint_obj)
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")")
             term_hold_obj = TerminalHolding(
                 waypoint=waypoint_obj,
                 path_descriptor=row[0].strip(),
@@ -209,7 +210,7 @@ def main():
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         extract_insert_apch(file_name, rwy_dir, tables)
 
-    session.commit()
+    # session.commit()
     print("Data insertion complete.")
 
 

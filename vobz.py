@@ -10,11 +10,6 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 
 
-import camelot
-import os
-import re
-import pdftotext
-
 AIRPORT_ICAO = "VOBZ"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
@@ -116,6 +111,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+            
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=row[0],
@@ -123,7 +119,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 path_descriptor=row[1].strip(),
                 course_angle=row[4]
                 .replace("\n", "")
-                .replace("  ", "")
+                .replace(" ", "")
                 .replace(" )", ")"),
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                 altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
@@ -150,7 +146,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     data_parts.pop(0)
                     data_parts.insert(3, "-")
                     data_parts.insert(-3, "-")
-                    print(data_parts)
                 
                 elif data_parts[0].replace('.', '', 1).isdigit():
                     data_parts.insert(5, data_parts[0])
@@ -158,7 +153,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     data_parts.pop(0)
                     data_parts.insert(3, "-")
                     data_parts.insert(-3, "-")
-                    print(data_parts)
                 elif data_parts[0] == "HM":
                     data_parts.insert(0, data_parts[3])
                     data_parts.insert(4, data_parts[3])
@@ -166,7 +160,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     data_parts.pop(4)
                     data_parts.insert(6, data_parts[3])
                     data_parts.pop(3)
-                    print(data_parts)
                
                     
 

@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\DELL\OneDrive\Desktop\ans_regist\.venv
+set VIRTUAL_ENV=C:\Users\LENOVO\Desktop\ANS_Register_Extraction\AIP_Data_Extraction\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

@@ -172,6 +172,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             )
             .first()
         )
+        
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=row[0].strip(),

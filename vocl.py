@@ -11,7 +11,7 @@ wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
 import camelot
 import os
 import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VOCL"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -66,7 +66,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     coding_df = tables[0].df
     # print(coding_df)
     coding_df = coding_df.drop(0)
-    print(coding_df)
     procedure_name = (
         re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
     )
@@ -87,13 +86,14 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+       
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")"),
             turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
             speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
@@ -140,7 +140,6 @@ def main():
                     # print(df)
                     for _, row in df.iterrows():
                         row = list(row)
-                        print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue
@@ -150,7 +149,6 @@ def main():
                                 Waypoint.name == row[0].strip(),
                             )
                         ).fetchone()
-                        print(result_row)
                         if result_row:
                             continue
                         

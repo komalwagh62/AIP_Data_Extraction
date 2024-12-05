@@ -9,10 +9,6 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 # EXTRACTOR CODE #
 ##################
 
-import camelot
-import pdftotext
-import re
-import os
 import pandas as pd
 
 
@@ -143,15 +139,19 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=row[3].strip())
                         .first()
                     )
+                    course_angle = row[5].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                    angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+                    if len(angles) == 2:
+                        course_angle = f"{angles[0]}({angles[1]})"
+                        
                     proc_des_obj = ProcedureDescription(
                         procedure=procedure_obj,
                         seq_num=row[0].strip(),
                         waypoint=waypoint_obj,
                         path_descriptor=row[1].strip(),
-                        course_angle=row[5]
-                        .replace("\n", "")
-                        .replace("  ", "")
-                        .replace(" )", ")"),
+                        course_angle=course_angle,
                         turn_dir=row[8].strip() if is_valid_data(row[8]) else None,
                         altitude_ll=row[9].strip() if is_valid_data(row[9]) else None,
                         speed_limit=row[10].strip() if is_valid_data(row[10]) else None,
@@ -209,6 +209,12 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                                 Waypoint.name == waypoint_name,
                             )
                         ).fetchone()[0]
+                        course_angle = data_parts[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                        angles = course_angle.split()
+
+                        # Check if we have exactly two angle values
+                        if len(angles) == 2:
+                            course_angle = f"{angles[0]}({angles[1]})"
                         proc_des_obj = ProcedureDescription(
                             procedure=procedure_obj,
                             seq_num=data_parts[0].strip(),

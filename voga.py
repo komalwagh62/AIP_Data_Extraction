@@ -8,10 +8,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VOGA"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -88,7 +85,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             )
     coding_df = tables[0].df
     coding_df = coding_df.drop(index=[0, 1])
-    print(coding_df)
     # apch_data_df = coding_df.loc[:, (coding_df != "").any(axis=0)]
 
     procedure_name = (
@@ -113,7 +109,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-
+                
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     seq_num=row[0],
@@ -121,7 +117,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     path_descriptor=row[1].strip(),
                     course_angle=row[4]
                     .replace("\n", "")
-                    .replace("  ", "")
+                    .replace(" ", "")
                     .replace(" )", ")"),
                     turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                     altitude_ul=row[7].strip() if is_valid_data(row[7]) else None,
@@ -140,7 +136,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         proc_des_obj.fly_over = False
         elif (len(row)) == 11:
             if bool(row[-1].strip()):
-                print(row)
                 if is_valid_data(row[2]):
                     waypoint_name = row[2].strip().replace("\n", "").replace(" ", "")
                     waypoint_obj = (
@@ -148,7 +143,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-
+            
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     seq_num=row[0],
@@ -156,7 +151,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     path_descriptor=row[1].strip(),
                     course_angle=row[4]
                     .replace("\n", "")
-                    .replace("  ", "")
+                    .replace(" ", "")
                     .replace(" )", ")"),
                     turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                     altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,

@@ -6,7 +6,7 @@ from sqlalchemy import select
 ##################
 
 import camelot
-import pdftotext
+
 import re
 import os
 import pandas as pd
@@ -78,9 +78,13 @@ def extract_insert_sid(type_):
                 data_parts = row[0].split(" \n")
                 course_angle = data_parts.pop(0)
                 course_angle = course_angle + " " + data_parts.pop(-1)
+                course_angle = course_angle.replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                if len(angles) == 2:
+                    course_angle = f"{angles[0]}({angles[1]})"
                 data_parts = [part for part in data_parts if part != ""]
                 waypoint_name = data_parts[0]
-                # print(waypoint_name,"waypoint name")
                 data_parts.insert(3, course_angle)
 
                 waypoint_obj = (
@@ -125,21 +129,22 @@ def extract_insert_sid(type_):
                 seq_num += 1  # Increment sequence number for next row
             elif row[-1].strip():
                 waypoint_name = row[0].strip()
-                # print(waypoint_name,"yh")
                 waypoint_obj = (
                     session.query(Waypoint)
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+                course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                if len(angles) == 2:
+                    course_angle = f"{angles[0]}({angles[1]})"
                 proc_des_obj = ProcedureDescription(
                     procedure=prev_procedure_obj,  # Use the previous procedure object
                     seq_num=seq_num,
                     waypoint=waypoint_obj,
                     path_descriptor=row[2].strip(),
-                    course_angle=row[3]
-                    .replace("\n", "")
-                    .replace("  ", "")
-                    .replace(" )", ")"),
+                    course_angle=course_angle,
                     turn_dir=row[4].strip() if is_valid_data(row[4]) else None,
                     altitude_ul=row[5].strip() if is_valid_data(row[5]) else None,
                     altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
@@ -187,7 +192,6 @@ def extract_insert_star(type_):
                 procedure_name = procedure_names[i]
                 procedure_name = procedure_name.strip()
                 i += 1
-                # print("Current row", procedure_name)
                 procedure_obj = Procedure(
                     airport_icao=AIRPORT_ICAO,
                     rwy_dir=rwy_dir,
@@ -211,6 +215,11 @@ def extract_insert_star(type_):
                                 Waypoint.name == waypoint_name,
                             )
                         ).fetchone()[0]
+                        course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                        angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                        if len(angles) == 2:
+                            course_angle = f"{angles[0]}({angles[1]})"
                         proc_des_obj = ProcedureDescription(
                             procedure=prev_procedure_obj,
                             seq_num=seq_num,
@@ -248,16 +257,19 @@ def extract_insert_star(type_):
                     data_parts = row[0].split(" \n")
                     course_angle = data_parts.pop(0)
                     course_angle = course_angle + " " + data_parts.pop(-1)
+                    course_angle = course_angle.replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                    angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                    if len(angles) == 2:
+                        course_angle = f"{angles[0]}({angles[1]})"
                     data_parts = [part for part in data_parts if part != ""]
                     waypoint_name = data_parts[0]
-                    # print("Waypoint Name:", waypoint_name)
                     data_parts.insert(3, course_angle)
                     waypoint_obj = (
                         session.query(Waypoint)
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-                    # print("Waypoint ID:", waypoint_obj.id if waypoint_obj else None)  # Debugging line
                     proc_des_obj = ProcedureDescription(
                         procedure=prev_procedure_obj,
                         seq_num=seq_num,
@@ -298,15 +310,12 @@ def extract_insert_star(type_):
 def extract_insert_apch1(file_name, tables, rwy_dir):
     coding_df = tables[0].df
     coding_df = coding_df.drop(index=[0, 1])
-    # print(coding_df)
     apch_data_df = coding_df[coding_df.iloc[:, -2] == "RNP \nAPCH"]
     apch_data_df = apch_data_df.loc[:, (apch_data_df != "").any(axis=0)]
-    # print(apch_data_df)
     if not coding_df.empty and len(coding_df.columns) > 7:
         waypoint_list = coding_df.iloc[
             :, 3
         ].tolist()  # Extract WPT values from second-to-last column
-        # print(waypoint_list)
         lat_long_list = coding_df.iloc[
             :, 7
         ].tolist()  # Extract Latitude/Longitude values from seventh column
@@ -317,7 +326,6 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             for part in waypoint.split("\n")
             if part.strip() != ""
         ]
-        print(waypoint_list)
         lat_long_list = [
             part
             for lat_long in lat_long_list
@@ -371,7 +379,12 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                 .first()
             )
-            # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
+        course_angle = row[6].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+        angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[1]),
@@ -459,13 +472,18 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace("-Mag", "").replace("-True", "")
+        angles = course_angle.split()
+                        # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
             speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
@@ -499,6 +517,7 @@ def insert_terminal_holdings(file_name, type_):
                 .first()
             )
             # print(waypoint_obj)
+        
         term_hold_obj = TerminalHolding(
             waypoint_id=waypoint_obj.id,
             course_angle=row[3].replace("\n", "").replace("  ", "").replace(" )", ")"),

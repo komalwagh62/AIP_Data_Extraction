@@ -9,10 +9,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VAAU"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -100,6 +97,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     )
     session.add(procedure_obj)
 
+
     for _, row in apch_data_df.iloc[1:].iterrows():
         row = list(row)
         waypoint_obj = None
@@ -112,12 +110,13 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+            course_angle = row[4].replace("\n", "").replace(" ", "")
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=row[0],
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
-                course_angle=row[4].replace("\n", ""),
+                course_angle=course_angle,
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                 altitude_ul=row[7].strip() if is_valid_data(row[7]) else None,
                 altitude_ll=row[8].strip() if is_valid_data(row[8]) else None,
@@ -197,13 +196,13 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-                
+                course_angle = data_parts[4].strip().replace("\n", "").replace(" ", "")
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     seq_num=data_parts[0].strip(),
                     waypoint=waypoint_obj,
                     path_descriptor=data_parts[1].strip(),
-                    course_angle=data_parts[4].strip(),
+                    course_angle=course_angle,
                     turn_dir=data_parts[6].strip()
                     if is_valid_data(data_parts[6])
                     else None,

@@ -6,7 +6,6 @@ from sqlalchemy import select
 import camelot
 import os
 import re
-import pdftotext
 
 AIRPORT_ICAO = "VOKN"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -42,7 +41,6 @@ def is_valid_data(data):
 def extract_insert_apch(file_name, rwy_dir, tables):
    
     coding_df = tables[0].df
-    print(coding_df)
     coding_df = coding_df.drop(0)
     # print(coding_df)
     procedure_name = (
@@ -65,13 +63,19 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[1].strip())
                 .first()
             )
+        course_angle = row[4].replace("\n", "").replace(" ", " ").replace(" )", ")").replace(" N/A", "")
+        angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
             speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
@@ -115,7 +119,6 @@ def main():
                     if 'Waypoint \nType \nLatitude/Longitude (WGS84) \nIdentifier \n(DD:MM:SS.SS)' in header_row:
                         for _, row in df.iloc[1:].iterrows():
                          row = list(row)
-                         print(row)
     
                          row = [x for x in row if x.strip()]
                          if len(row) < 3:
@@ -136,7 +139,6 @@ def main():
                             )
                             for item in match
                         ]
-                         print(extracted_data1)
                          lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
                          lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                          lng1 = conversionDMStoDD(lng_value1 + lng_dir1)

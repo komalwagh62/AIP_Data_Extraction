@@ -330,3 +330,50 @@ def search_and_print_restricted_links(navigation_url, processed_restricted_file)
 
     return enr_5_1_urls
 
+
+
+# Search for ENR 2.1 link and print them if not already processed
+def search_and_print_controlled_links(navigation_url, processed_controlled_file):
+    processed_urls = load_processed_urls(processed_controlled_file)
+    script_name = os.path.basename(__file__)
+
+    print(f"Checking if Navigation URL '{navigation_url}' has already been processed by '{script_name}'...")
+
+    # Skip processing if this navigation URL was already handled by this script
+    if f"{script_name}:{navigation_url}" in processed_urls:
+        print(f"Navigation URL '{navigation_url}' already processed by '{script_name}'.")
+        return []
+
+    base_url = get_base_url(navigation_url)
+    print(f"Base URL: {base_url}")
+
+    response = fetch_url_with_retries(navigation_url)
+    if response is None:
+        print("Failed to fetch the navigation content after multiple attempts.")
+        return []
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a', href=True)
+    enr_2_1_urls = []
+
+    for link in links:
+        link_id = link.get('id', 'None')
+        href = link['href']
+        modified_url = f"{base_url}{href.split('/')[-1]}"  # Create the final URL
+
+        # Skip if the full URL is already processed by this script
+        if f"{script_name}:{modified_url}" in processed_urls:
+            print(f"Skipping already processed URL: {modified_url}")
+            continue
+
+        # Match ENR 4.4 links
+        if re.match(r'^ENR 2\.1', link_id):
+            enr_2_1_urls.append(modified_url)
+            print(f"ID: {link_id}, Modified URL: {modified_url}")
+            save_processed_url(processed_controlled_file, f"{script_name}:{modified_url}")  # Save URL immediately
+
+    # Mark the main navigation URL as processed
+    save_processed_url(processed_controlled_file, f"{script_name}:{navigation_url}")
+    print(f"Saved Navigation URL '{navigation_url}' as processed by '{script_name}'.")
+
+    return enr_2_1_urls

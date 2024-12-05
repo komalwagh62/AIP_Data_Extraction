@@ -11,9 +11,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
+
 import pdftotext
 
 AIRPORT_ICAO = "VEPY"
@@ -95,7 +93,7 @@ def extract_insert_sid_star(file_name):
                         path_descriptor=row[3].strip(),
                         course_angle=row[4]
                             .replace("\n", "")
-                            .replace("  ", "")
+                            .replace(" ", "")
                             .replace(" )", ")"),
                         turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
                         altitude_ul=row[6].strip() if is_valid_data(row[6]) else None,

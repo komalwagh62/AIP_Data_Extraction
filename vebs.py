@@ -8,10 +8,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VEBS"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -116,17 +113,17 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                if len(angles) == 2:
+                    course_angle = f"{angles[0]}({angles[1]})"
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     seq_num=row[0],
                     waypoint=waypoint_obj,
                     path_descriptor=row[1].strip(),
-                    
-                    course_angle=row[4]
-                    .replace("\n", "")
-                    .replace("  ", "")
-                    .replace(" )", ""),
+                    course_angle=course_angle,
                     turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                     altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
                     speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
@@ -168,12 +165,17 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                                 Waypoint.name == waypoint_name,
                             )
                         ).fetchone()[0]
+                        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                        angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                        if len(angles) == 2:
+                            course_angle = f"{angles[0]}({angles[1]})"
                         proc_des_obj = ProcedureDescription(
                             procedure=procedure_obj,
                             seq_num=data_parts[0].strip(),
                             waypoint=waypoint_obj,
                             path_descriptor=data_parts[1].strip(),
-                            course_angle=data_parts[4].strip(),
+                            course_angle=course_angle,
                             turn_dir=data_parts[6].strip()
                             if is_valid_data(data_parts[6])
                             else None,
@@ -229,16 +231,18 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         )
                         .first()
                     )
+                    course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                    angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                    if len(angles) == 2:
+                        course_angle = f"{angles[0]}({angles[1]})"
                     proc_des_obj = ProcedureDescription(
                         procedure=procedure_obj,
                         seq_num=row[0],
                         waypoint=waypoint_obj,
                         path_descriptor=row[1].strip(),
                         fly_over=row[3] == "Y" if is_valid_data(row[3]) else False,
-                        course_angle=row[4]
-                        .replace("\n", "")
-                        .replace("  ", "")
-                        .replace(" )", ""),
+                        course_angle=course_angle,
                         turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                         altitude_ll=altitude_ll,
                         speed_limit=speed_limit,
@@ -290,13 +294,17 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                                     )
                                     .first()
                                 )
-
+                            course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                            angles = course_angle.split()
+                        # Check if we have exactly two angle values
+                            if len(angles) == 2:
+                                course_angle = f"{angles[0]}({angles[1]})"
                             proc_des_obj = ProcedureDescription(
                                 procedure=procedure_obj,
                                 seq_num=data_parts[0].strip(),
                                 waypoint=waypoint_obj,
                                 path_descriptor=data_parts[1].strip(),
-                                course_angle=data_parts[3].strip(),
+                                course_angle=course_angle,
                                 turn_dir=data_parts[6].strip()
                                 if is_valid_data(data_parts[6])
                                 else None,

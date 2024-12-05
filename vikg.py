@@ -8,7 +8,7 @@ from sqlalchemy import select
 import camelot
 import os
 import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VIKG"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -171,7 +171,8 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
-                # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")")
+            print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=int(row[0]),
@@ -228,6 +229,8 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                                 Waypoint.name == waypoint_name,
                             )
                         ).fetchone()[0]
+                        course_angle=data_parts[4].strip().replace(" ", "")
+                        print(course_angle)
                         proc_des_obj = ProcedureDescription(
                             procedure=procedure_obj,
                             seq_num=data_parts[0].strip(),
@@ -339,6 +342,8 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+        course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")")
+        print(course_angle)
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,

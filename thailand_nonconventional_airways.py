@@ -63,7 +63,7 @@ if response.status_code == 200:
         start_point_data = []  # List to hold the start points and coordinates in pairs
         title_text = None
         
-        remark_sections = table.find_all('td', colspan='13')
+        remark_sections = table.find_all('td', colspan='10')
         # print(remark_sections)
         # Loop through each remark section found
         for section in remark_sections:
@@ -126,7 +126,6 @@ if response.status_code == 200:
                 span_elements = upper_td.find_all('span', class_='SD')
                 # Check if there are at least 2 spans to get the second and third span
                 if len(span_elements) == 2:
-                    # print(f"All span elements: {span_elements}")
                     # Extract and print the values from both spans
                     first_span_text = span_elements[0].text.strip()
                     second_span_text = span_elements[1].text.strip()
@@ -143,23 +142,6 @@ if response.status_code == 200:
                     first_span_text = span_elements[0].text.strip()
                     second_span_text = span_elements[1].text.strip()
                     lower_limit_value = f"{first_span_text} {second_span_text}"
-                    
-            # min_flight_alitude = row.find_all('p',class_='line')
-            # for min_td in min_flight_alitude:
-            #     # Find all span elements with class 'SD'
-            #     span_elements = min_td.find_all('span', class_='SD')
-            #     # Check if there are at least 2 spans to get the second and third span
-            #     if len(span_elements) == 2:
-            #         # Extract and print the values from both spans
-            #         first_span_text = span_elements[0].text.strip()
-            #         second_span_text = span_elements[1].text.strip()
-            #         min_flight_value = f"{first_span_text} {second_span_text}"
-                    
-           
-            # spans = row.find_all('span', class_='SD')
-            # for i, span in enumerate(spans):
-            #     if span.next_sibling and 'VAL_WID_LEFT' in span.next_sibling.get_text(strip=True):
-            #         lateral_limits = span.get_text(strip=True)
                     
             
             # Find all acronyms within the row
@@ -243,10 +225,9 @@ if response.status_code == 200:
             dist_values = dist_values
             upper_limit_value = upper_limit_value
             lower_limit_value = lower_limit_value
-            # min_flight_value = min_flight_value
-            # lateral_limits = lateral_limits
             direction = direction
             title_text = title_text
+            print(title_text)
             
             route = ThailandNonConvLineData(
                 airway_id = airway_id,
@@ -259,8 +240,6 @@ if response.status_code == 200:
                 radial_distance = dist_values,
                 upper_limit = upper_limit_value,
                 lower_limit = lower_limit_value,
-                # min_flight_altitude = min_flight_value,
-                # lateral_limits=lateral_limits if isinstance(lateral_limits, str) else lateral_limits.get_text(strip=True),
                 direction_of_cruising_levels = direction,
                 geomcolumn=line_geometry,
                 type = 'Class [A]',

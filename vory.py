@@ -8,10 +8,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VORY"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -73,7 +70,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 )
                 for item in match
             ]
-            print(extracted_data1)
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
@@ -102,7 +98,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     session.add(procedure_obj)
     for _, row in apch_data_df.iloc[1:].iterrows():
         row = list(row)
-        print(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
          if is_valid_data(row[2]):
@@ -117,7 +112,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             seq_num=(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")"),
             turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
             speed_limit=row[8].strip() if is_valid_data(row[8]) else None,

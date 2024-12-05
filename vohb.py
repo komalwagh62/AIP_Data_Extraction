@@ -7,7 +7,7 @@ from sqlalchemy import select
 import camelot
 import os
 import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VOHB"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -113,7 +113,11 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             else:
                 role_theFix_value = ""
                 nav_spec_value = row[10].strip() if is_valid_data(row[10]) else ""
-
+        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+        angles = course_angle.split()
+                        # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=row[0],

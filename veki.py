@@ -9,10 +9,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 # EXTRACTOR CODE #
 ##################
-import camelot
-import os
-import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VEKI"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -119,6 +116,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .first()
                 )
                 # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
+            
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=int(row[0]),
@@ -126,7 +124,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 path_descriptor=row[1].strip(),
                 course_angle=row[4]
                 .replace("\n", "")
-                .replace("  ", "")
+                .replace(" ", "")
                 .replace(" )", ")"),
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                 altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
@@ -186,7 +184,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         data_parts.pop(-1)
                         data_parts.insert(-3, data_parts[-1])
                         data_parts.pop(-1)
-                print(data_parts)
 
 
                 waypoint_name = data_parts[2]
@@ -195,12 +192,18 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+                course_angle = data_parts[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+                if len(angles) == 2:
+                    course_angle = f"{angles[0]}{angles[1]}"
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     seq_num=data_parts[0].strip(),
                     waypoint=waypoint_obj,
                     path_descriptor=data_parts[1].strip(),
-                    course_angle=data_parts[4].strip(),
+                    course_angle=course_angle,
                     turn_dir=data_parts[6].strip()
                     if is_valid_data(data_parts[6])
                     else None,

@@ -66,13 +66,18 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+        angles = course_angle.split()
+                        # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
             speed_limit=row[7].strip() if is_valid_data(row[7]) else None,

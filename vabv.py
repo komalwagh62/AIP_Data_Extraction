@@ -9,10 +9,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 # EXTRACTOR CODE #
 ##################
 
-import camelot
-import pdftotext
-import re
-import os
+
 
 
 AIRPORT_ICAO = "VABV"
@@ -127,15 +124,20 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     .first()
                 )
                 # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
+            course_angle = row[5].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+            angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+            if len(angles) == 2:
+                course_angle = f"{angles[0]}({angles[1]})"
+                print(course_angle)
+                
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=int(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
-                course_angle=row[5]
-                .replace("\n", "")
-                .replace("  ", "")
-                .replace(" )", ")"),
+                course_angle=course_angle,
                 turn_dir=row[8].strip() if is_valid_data(row[8]) else None,
                 altitude_ll=row[9].strip() if is_valid_data(row[9]) else None,
                 speed_limit=row[10].strip() if is_valid_data(row[10]) else None,

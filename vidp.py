@@ -9,9 +9,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 ##################
 # EXTRACTOR CODE #
 ##################
-import os
-import re
-import pdftotext
+
 import pandas as pd
 
 
@@ -53,7 +51,7 @@ def is_valid_data(data):
 
 
 
-EXCEL_FILE = r"C:\Users\LENOVO\Desktop\ANS_Register_Extraction\ans_regist\AIP Supp 74-2023_VIDP RNAV SID & STAR.xlsx"
+EXCEL_FILE = r"C:\Users\LENOVO\Desktop\ANS_Register_Extraction\AIP_Data_Extraction\AIP Supp 74-2023_VIDP RNAV SID & STAR.xlsx"
 AIRPORT_ICAO = "VIDP"
 
 
@@ -81,17 +79,26 @@ def process_procedures(df, procedure_type):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                     .first()
                 )
+            # Ensure `row[4]` is a string before calling replace
+            if isinstance(row[4], str):
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "")
+            else:
+    # Convert non-string types to a string, or handle the case appropriately
+                course_angle = str(row[4])
+
+            angles = course_angle.split()
+
+# Check if we have exactly two angle values
+            if len(angles) == 2:
+                course_angle = f"{angles[0]}({angles[1]})"
+                # print(course_angle)
 
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 seq_num=int(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
-                course_angle=row[4]
-                .replace('"', "")
-                .replace("\n", "")
-                .replace("  ", "")
-                .replace(" )", ")") if is_valid_data(row[4]) else None,
+                course_angle=course_angle if is_valid_data(course_angle) else None,
                 turn_dir=row[6] if is_valid_data(row[6]) else None,
                 altitude_ul=str(row[7]) if is_valid_data(row[7]) else None,
                 altitude_ll=str(row[8]) if is_valid_data(row[8]) else None,
@@ -138,13 +145,15 @@ def main():
             .filter_by(airport_icao=AIRPORT_ICAO, name=(row[1]).strip())
             .first()
         )
+        course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("/", "")
+        angles = course_angle.split()
+        # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
         term_hold_obj = TerminalHolding(
             waypoint_id=waypoint_obj.id,
             path_descriptor=row[0].strip(),
-            course_angle=row[3]
-            .replace("\n", "")
-            .replace("  ", "")
-            .replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[5] if is_valid_data(row[5]) else None,
             altitude_ul=str(row[6]) if is_valid_data(row[6]) else None,
             altitude_ll=str(row[7]) if is_valid_data(row[7]) else None,

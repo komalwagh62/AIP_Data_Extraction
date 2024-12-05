@@ -8,7 +8,7 @@ from sqlalchemy import select
 import camelot
 import os
 import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VEKO"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -107,13 +107,14 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+       
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")"),
             turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ul=row[7].strip() if is_valid_data(row[7]) else None,
             altitude_ll=row[8].strip() if is_valid_data(row[8]) else None,

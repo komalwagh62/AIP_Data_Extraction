@@ -453,6 +453,60 @@ class ThailandNonConvLineData(Base):
     geomcolumn = Column(Geometry)
     type = Column(VARCHAR(20), nullable=False)
     remarks = Column(String(2000))
+  
+    
+class FlightInformationRegion(Base):
+    __tablename__ = 'flight_information_region'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fir_name = Column(String(255), nullable=False)
+    lateral_limits = Column(String(2000), nullable=False)
+    vertical_limits = Column(String(2000), nullable=True)  # Allow NULL values
+    unit_process_service = Column(String(255), nullable=False)
+    call_sign = Column(String(255), nullable=False)
+    language = Column(String(255), nullable=False)
+    area = Column(String(255), nullable=False)
+    frequency = Column(String(255), nullable=False)
+    remarks = Column(String(2000), nullable=False)
+    
+class ControlArea(Base):
+    __tablename__ = 'control_area'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fir_name = Column(String(255), nullable=False)
+    lateral_limits = Column(String(2000), nullable=False)
+    vertical_limits = Column(String(2000), nullable=True)  # Allow NULL values
+    unit_process_service = Column(String(255), nullable=False)
+    call_sign = Column(String(255), nullable=False)
+    language = Column(String(255), nullable=False)
+    area = Column(String(255), nullable=False)
+    frequency = Column(String(255), nullable=False)
+    remarks = Column(String(2000), nullable=False)
+    
+class TerminalControlArea(Base):
+    __tablename__ = 'terminal_control_area'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fir_name = Column(String(255), nullable=False)
+    lateral_limits = Column(String(2000), nullable=False)
+    vertical_limits = Column(String(2000), nullable=True)  # Allow NULL values
+    unit_process_service = Column(String(255), nullable=False)
+    call_sign = Column(String(255), nullable=False)
+    language = Column(String(255), nullable=False)
+    area = Column(String(255), nullable=False)
+    frequency = Column(String(255), nullable=False)
+    remarks = Column(String(2000), nullable=False)
+
+    
+class MilitaryControlZones(Base):
+    __tablename__ = 'military_control_zones'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fir_name = Column(String(255), nullable=False)
+    lateral_limits = Column(String(2000), nullable=False)
+    vertical_limits = Column(String(2000), nullable=True)  # Allow NULL values
+    unit_process_service = Column(String(255), nullable=False)
+    call_sign = Column(String(255), nullable=False)
+    language = Column(String(255), nullable=False)
+    area = Column(String(255), nullable=False)
+    frequency = Column(String(255), nullable=False)
+    remarks = Column(String(2000), nullable=False)
     
 
 

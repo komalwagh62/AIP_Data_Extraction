@@ -7,7 +7,7 @@ from sqlalchemy import select
 import camelot
 import os
 import re
-import pdftotext
+
 
 AIRPORT_ICAO = "VOBM"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -106,6 +106,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+        
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
