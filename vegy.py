@@ -4,8 +4,17 @@ import os
 
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription
+from model import session, Waypoint, Procedure,AiracData, ProcedureDescription
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def conversionDMStoDD(coord):  # to convert DMS into Decimal Degrees
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -34,6 +43,7 @@ def is_valid_data(data):
 
 
 def extract_insert_apch(file_name):
+    process_id = get_active_process_id()
     rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
     tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="1")
     df = tables[0].df
@@ -66,6 +76,7 @@ def extract_insert_apch(file_name):
                 name=name,
                 coordinates_dd = coordinates,
                 geom=f"POINT({long} {lat})",
+                process_id=process_id
             )
         )
 
@@ -80,6 +91,7 @@ def extract_insert_apch(file_name):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
     for i, row in df.iterrows():

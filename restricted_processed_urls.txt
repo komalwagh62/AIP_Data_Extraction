@@ -1,2 +1,30 @@
-url_extraction.py:https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
-url_extraction.py:https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.1-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR 5.2-en-GB.html
+https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/Menu-en-GB.html

@@ -4,12 +4,21 @@ import os
 
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription
+from model import AiracData, session, Waypoint, Procedure, ProcedureDescription
 
 AIRPORT_ICAO = "VAPR"
 
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def conversionDMStoDD(coord):  # to convert DMS into Decimal Degrees
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -38,6 +47,7 @@ def is_valid_data(data):
 
 
 def extract_insert_apch(file_name):
+    process_id = get_active_process_id()
     rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
     tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="1")
     df = tables[0].df
@@ -68,6 +78,7 @@ def extract_insert_apch(file_name):
                 name=name,
                 coordinates_dd = coordinates,
                 geom=f"POINT({long} {lat})",
+                process_id=process_id
             )
         )
 
@@ -83,8 +94,11 @@ def extract_insert_apch(file_name):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in df.iterrows():
         row = list(row)
         if not re.match(r"\d+$", row[0]):
@@ -116,6 +130,7 @@ def extract_insert_apch(file_name):
             print(course_angle)
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
+            sequence_number=sequence_number,
             seq_num=row[0],
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
@@ -126,6 +141,7 @@ def extract_insert_apch(file_name):
             dst_time=row[5].strip() if is_valid_data(row[5]) else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
             nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+            process_id=process_id
         )
         session.add(proc_des_obj)
         if is_valid_data(data := row[3]):
@@ -133,6 +149,7 @@ def extract_insert_apch(file_name):
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
+        sequence_number += 1
 
 def main():
     file_names = os.listdir(FOLDER_PATH)

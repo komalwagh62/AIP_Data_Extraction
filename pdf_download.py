@@ -127,6 +127,14 @@ def check_iframe_content_for_pdfs(iframe_url, airport_href):
     # Find all PDF links in the iframe content
     pdf_links = soup.find_all('a', href=True)
     directory_name = f"downloads/{airport_href.split('/')[-1].replace('.html', '')}"
+    icao_code = (
+    airport_href.split('/')[-1]  # Get the last part of the path
+    .split('AD 2.1')[-1]        # Split by 'AD 2.1' and take the second part
+    .split('-')[0]              # Split by '-' and take the first part
+    )
+    # Define the directory name using only the ICAO code
+    directory_name = f"downloads/{icao_code}"
+    print(directory_name)
     for link in pdf_links:
         pdf_url = link['href']
         if pdf_url.endswith('.pdf'):

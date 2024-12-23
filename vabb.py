@@ -4,7 +4,7 @@ import os
 
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
+from model import AiracData, session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
 ##################
 # EXTRACTOR CODE #
 ##################
@@ -40,8 +40,18 @@ def is_valid_data(data):
         return False
     return True
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def extract_insert_apch1(file_name, tables, rwy_dir):
+    process_id = get_active_process_id()
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
@@ -52,7 +62,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             for _, row in waypoint_df.iterrows():
                 row = list(row)
 
-                # print(row)
+                print(row)
                 row = [x for x in row if x.strip()]
 
                 waypoint_name1 = row[0].strip()
@@ -62,6 +72,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                     select(Waypoint).where(
                         Waypoint.airport_icao == AIRPORT_ICAO,
                         Waypoint.name == row[1].strip(),
+                        
                     )
                 ).fetchone()
                 if result_row:
@@ -85,6 +96,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         name=row[1].strip(),
                         coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
+                        process_id = process_id
                     )
                 )
         elif len(header_row) == 2:
@@ -121,8 +133,11 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                     name=waypoint_name,
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng1} {lat1})",
+                    process_id = process_id
                 )
                 session.add(waypoint)
+    
+    
     procedure_name = (
         re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
     )
@@ -131,20 +146,18 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
     coding_df = tables[0].df
     apch_data_df = coding_df.loc[:, (coding_df != "").any(axis=0)]
     header_row = apch_data_df.iloc[1].tolist()
-    # print(header_row)
-
-    if header_row[0].isdigit():
-        for _, row in apch_data_df.iloc[1:].iterrows():
+    sequence_number = 1
+    if len(header_row) == 11:
+        for _, row in apch_data_df.iloc[2:].iterrows():
             row = list(row)
-
             waypoint_obj = None
             if bool(row[-1].strip()):
-                # print(row)
                 if is_valid_data(row[2]):
                     waypoint_name = (
                         row[2].strip().strip().replace("\n", "").replace(" ", "")
@@ -165,29 +178,61 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
 
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
-                    seq_num=int(row[0]),
+                    sequence_number = sequence_number,
+                    seq_num=(row[0]),
                     waypoint=waypoint_obj,
-                    path_descriptor=row[3].strip(),
+                    path_descriptor=row[1].strip(),
                     course_angle=course_angle,
-                    turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
-                    altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
-                    speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
-                    dst_time=row[8].strip() if is_valid_data(row[8]) else None,
+                    turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
+                    altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
+                    speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
+                    dst_time=row[5].strip() if is_valid_data(row[5]) else None,
                     vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
                     nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+                    process_id=process_id
                 )
+                # print(proc_des_obj)
                 session.add(proc_des_obj)
-                if is_valid_data(data := row[1]):
+                if is_valid_data(data := row[3]):
                     if data == "Y":
                         proc_des_obj.fly_over = True
                     elif data == "N":
                         proc_des_obj.fly_over = False
+                sequence_number += 1
     else:
+        sequence_number  =1
         for _, row in apch_data_df.iloc[2:].iterrows():
-            row = list(row)
-            waypoint_obj = None
-            if bool(row[-1].strip()):
-                # print(row)
+            
+             
+             row = list(row)
+             print(row)
+             row1 = [""]
+             row2 = []
+             if len(row) >= 3 and row[-3].strip():
+                    
+                    row1 = re.split(r'\s{2,}', row[-3])  # This splits by two or more spaces
+                    # print("Row1 after split:", row1[-1])  # Print the resulting split list
+                    if len(row1) == 2:
+                        row.insert(8, row1[0])  
+                        row.insert(9, row1[-1]) 
+                        row.pop(-3)
+                        row.pop(-2)
+             if len(row) >= 3 and row[-1].strip():
+                    
+                    row2 = re.split(r'\s{2,}', row[-1])  # This splits by two or more spaces
+                    # print("Row1 after split:", row1[-1])  # Print the resulting split list
+                    if len(row2) == 2:
+                        
+                        row.insert(-2, row2[0]) 
+                        row.insert(-1, row2[-1]) 
+                        row.pop(-3)
+                        # row.pop(-1)
+             print(row) 
+                        # row.insert(9, row1[-1]) 
+                        # row.pop(-3)
+                        # row.pop(-2)
+             waypoint_obj = None
+             if bool(row[-1].strip()):
                 if is_valid_data(row[2]):
                     waypoint_name = (
                         row[2].strip().strip().replace("\n", "").replace(" ", "")
@@ -198,20 +243,26 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
+                # print(row)
+                
+                    # data_parts.pop(-3)
+                        
+                        
+                    
+                # print(row)
                 course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
                 angles = course_angle.split()
                 # Check if we have exactly two angle values
                 if len(angles) == 2:
                     course_angle = f"{angles[0]}({angles[1]})"
+                # print(row,"rftgh")
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
-                    seq_num=int(row[0]),
+                    sequence_number = sequence_number,
+                    seq_num=(row[0]),
                     waypoint=waypoint_obj,
                     path_descriptor=row[1].strip(),
-                    course_angle=row[4]
-                    .replace("\n", "")
-                    .replace("  ", "")
-                    .replace(" )", ")"),
+                    course_angle=course_angle,
                     turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                     altitude_ul=row[7].strip() if is_valid_data(row[7]) else None,
                     altitude_ll=row[8].strip() if is_valid_data(row[8]) else None,
@@ -219,57 +270,81 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                     dst_time=row[5].strip() if is_valid_data(row[5]) else None,
                     vpa_tch=row[10].strip() if is_valid_data(row[10]) else None,
                     nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+                    process_id=process_id
                 )
-                alt_speed_data = row[9].strip()
-                if alt_speed_data:
-                    alt_speed_values = alt_speed_data.split()
-                    if len(alt_speed_values) == 2:
-                        proc_des_obj.altitude_ll, proc_des_obj.speed_limit = alt_speed_values
+                # alt_speed_data = row[9].strip()
+                # if alt_speed_data:
+                #     alt_speed_values = alt_speed_data.split()
+                #     if len(alt_speed_values) == 2:
+                #         proc_des_obj.altitude_ll, proc_des_obj.speed_limit = alt_speed_values
                         
-                vpa_tch_nav_spec = row[11].strip()
-                if vpa_tch_nav_spec:
-                    vpa_tch_nav_spec_parts = vpa_tch_nav_spec.split()
-                    if len(vpa_tch_nav_spec_parts) > 1:
-                        last_part = vpa_tch_nav_spec_parts[-1]
-                        if last_part == "APCH" and any(
-                            char.isdigit() for char in vpa_tch_nav_spec_parts[0]
-                        ):
-                            proc_des_obj.vpa_tch = vpa_tch_nav_spec_parts[0]
-                            proc_des_obj.nav_spec = " ".join(vpa_tch_nav_spec_parts[1:])
+                # vpa_tch_nav_spec = row[11].strip()
+                # if vpa_tch_nav_spec:
+                #     vpa_tch_nav_spec_parts = vpa_tch_nav_spec.split()
+                #     if len(vpa_tch_nav_spec_parts) > 1:
+                #         last_part = vpa_tch_nav_spec_parts[-1]
+                #         if last_part == "APCH" and any(
+                #             char.isdigit() for char in vpa_tch_nav_spec_parts[0]
+                #         ):
+                #             proc_des_obj.vpa_tch = vpa_tch_nav_spec_parts[0]
+                #             proc_des_obj.nav_spec = " ".join(vpa_tch_nav_spec_parts[1:])
+                print(proc_des_obj)
                 session.add(proc_des_obj)
                 if is_valid_data(data := row[3]):
                     if data == "Y":
                         proc_des_obj.fly_over = True
                     elif data == "N":
                         proc_des_obj.fly_over = False
-            else:
+                sequence_number += 1
+             else:
                 data_parts = row[0].split(" \n")
                 # print(data_parts)
-                if len(data_parts) > 1:
+                if len(data_parts) == 13:
+                    
                     if data_parts[0].isdigit() or data_parts[0].endswith("Mag"):
-                        if data_parts[0].isdigit():
-                            data_parts.insert(7, "")
-                            data_parts.insert(3, "")
-                        elif data_parts[0].endswith("Mag"):
+                        # if data_parts[0].isdigit():
+                        #     data_parts.insert(7, "")
+                        #     data_parts.insert(3, "")
+                        #     print(data_parts)
+                        if data_parts[0].endswith("Mag"):
                             data_to_insert = data_parts[0] + " " + data_parts[-1]
                             data_parts.insert(5, data_to_insert)
                             data_parts.pop(0)
                             data_parts.pop(-1)
                             data_parts.pop(0)
+                            
                             # data_parts.pop(1)
                             data_parts.insert(3, data_parts[4])
                             data_parts.pop(5)
                             # data_parts.insert(7, data_parts[0])
-                            data_parts.pop(0)
+                            # data_parts.pop(0)
+                            data_parts.insert(7, "")
+                            # print(data_parts)
                             # data_parts.pop(4)
-                            data_parts.insert(7, data_parts[4])
-                            data_parts.pop(4)
-                            data_parts.insert(3, "")
-
-                        waypoint_name = data_parts[2]
+                            # data_parts.insert(7, data_parts[4])
+                            # data_parts.pop(4)
+                            # data_parts.insert(3, "")
+                            
+                        
+                else:
+                    data_parts.insert(7, "")  # Insert blank at index 7
+                    # print(data_parts)
+                    # Initialize data_parts1 with default value
+                    data_parts1 = [""]  # Default to an empty list with one blank value
+                    
+                    # Check if data_parts has enough elements and the 3rd-to-last element is non-empty
+                    if len(data_parts) >= 3 and data_parts[-3].strip():  
+                            data_parts1 = data_parts[-3].split("  ")
+                    # print(data_parts1[-1])
+                    data_parts.insert(8, data_parts1[0])  
+                    data_parts.insert(9, data_parts1[-1]) 
+                    data_parts.pop(-3)
+                    
+                # print("After Insert:", data_parts)  # Print updated list
+                waypoint_name = data_parts[2]
                         # print(waypoint_name)
-                        if is_valid_data(waypoint_name):
-                            waypoint_obj = (
+                if is_valid_data(waypoint_name):
+                    waypoint_obj = (
                                 session.query(Waypoint)
                                 .filter_by(
                                     airport_icao=AIRPORT_ICAO,
@@ -277,14 +352,17 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                                 )
                                 .first()
                             )
-                        course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
-                        angles = course_angle.split()
+                if len(data_parts) > 4:
+                #  print(data_parts)
+                 course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                 angles = course_angle.split()
                         # Check if we have exactly two angle values
-                        if len(angles) == 2:
-                            course_angle = f"{angles[0]}({angles[1]})"
+                 if len(angles) == 2:
+                    course_angle = f"{angles[0]}({angles[1]})"
                         
-                        proc_des_obj = ProcedureDescription(
+                 proc_des_obj = ProcedureDescription(
                             procedure=procedure_obj,
+                            sequence_number = sequence_number,
                             seq_num=data_parts[0].strip(),
                             waypoint=waypoint_obj,
                             path_descriptor=data_parts[1].strip(),
@@ -310,25 +388,20 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                             nav_spec=data_parts[11].strip()
                             if is_valid_data(data_parts[11])
                             else None,
-                        )
-                        alt_speed_data = data_parts[9].strip()
-                        if alt_speed_data:
-                         alt_speed_values = alt_speed_data.split()
-                         if len(alt_speed_values) == 2:
-                          proc_des_obj.altitude_ll = alt_speed_values[0]
-                          proc_des_obj.speed_limit = alt_speed_values[1]
-                         else:
-                           proc_des_obj.altitude_ll = alt_speed_data
-
-                        session.add(proc_des_obj)
-                        if is_valid_data(data := data_parts[3]):
-                            if data == "Y":
-                                proc_des_obj.fly_over = True
-                            elif data == "N":
-                                proc_des_obj.fly_over = False
+                            process_id=process_id
+                )
+                 session.add(proc_des_obj)
+                #  print(proc_des_obj)
+                 if is_valid_data(data := data_parts[3]):
+                    if data == "Y":
+                        proc_des_obj.fly_over = True
+                    elif data == "N":
+                        proc_des_obj.fly_over = False
+                 sequence_number += 1
 
 
 def extract_insert_apch2(file_name, rwy_dir, tables):
+    process_id = get_active_process_id()
     coding_df = tables[0].df
     coding_df = coding_df.drop(index=[0, 1])
     # print(coding_df)
@@ -393,6 +466,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                     type=type.strip(),
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
+                    process_id=process_id
                 )
                 session.add(new_waypoint)
                 # session.commit()
@@ -404,11 +478,13 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
     # print(coding_df)
     apch_data_df = coding_df[coding_df.iloc[:, -3] == "RNP \nAPCH"]
     apch_data_df = apch_data_df.loc[:, (apch_data_df != "").any(axis=0)]
+    sequence_number = 1
     for _, row in apch_data_df.iterrows():
         row = list(row)
 
@@ -433,6 +509,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                 course_angle = f"{angles[0]}({angles[1]})"
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
+                sequence_number = sequence_number,
                 seq_num=int(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[3].strip(),
@@ -444,6 +521,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                 vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
                 role_of_the_fix=row[10].strip() if is_valid_data(row[10]) else None,
                 nav_spec=row[11].strip().replace("\n", "").replace(" ", ""),
+                process_id=process_id
             )
             session.add(proc_des_obj)
             if is_valid_data(data := row[1]):
@@ -451,6 +529,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                     proc_des_obj.fly_over = True
                 elif data == "N":
                     proc_des_obj.fly_over = False
+            sequence_number += 1
 
 
 def main():
@@ -467,10 +546,10 @@ def main():
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         if len(tables) > 1:
             extract_insert_apch1(file_name, tables, rwy_dir)
-        elif len(tables) == 1:
-            extract_insert_apch2(file_name, rwy_dir, tables)
+        # if len(tables) == 1:
+        #     extract_insert_apch2(file_name, rwy_dir, tables)
 
-    # session.commit()
+    session.commit()
     print("Data insertion complete.")
 
 

@@ -1,5 +1,5 @@
 import re
-from model import Aerodrome_Obstacle, AirTrafficServiceAirspace, AirTrafficServicesCommunicationFacilities, ApproachAndRunwayLighting, Navaids, RunwayCharacterstics,DeclaredDistances, session
+from model import Aerodrome_Obstacle,AiracData, AirTrafficServiceAirspace, AirTrafficServicesCommunicationFacilities, ApproachAndRunwayLighting, Navaids, RunwayCharacterstics,DeclaredDistances, session
 from sqlalchemy.exc import IntegrityError
 import requests
 from bs4 import BeautifulSoup
@@ -30,7 +30,18 @@ def conversionDMStoDD(coord):
         dd = (degrees + minutes / 60 + seconds / 3600) * direction[dir_part]
     return dd
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
+
 def process_ad_data(urls):
+ process_id = get_active_process_id()
  for url in urls:
   icao_match = re.search(r"AD 2\.1([A-Z]+)", url)
   if not icao_match:
@@ -93,7 +104,8 @@ def process_ad_data(urls):
                                 geom=ewkb_geometry,
                                 elevation=data[5],
                                 service_volume_radius=data[6],
-                                remarks=data[7]
+                                remarks=data[7],
+                                process_id=process_id
                             )
                             session.add(navaid)
             break
@@ -143,7 +155,8 @@ def process_ad_data(urls):
                         geom=ewkb_geometry,
                         elevation=elevation,
                         marking_lgt=marking_lgt,
-                        remarks=remarks
+                        remarks=remarks,
+                        process_id=process_id
                     )
                      session.add(aerodrome_obstacle)
                     else:
@@ -177,7 +190,8 @@ def process_ad_data(urls):
                         geom=ewkb_geometry,
                         elevation=row_data[3],
                         marking_lgt=row_data[4],
-                        remarks=row_data[5]
+                        remarks=row_data[5],
+                        process_id=process_id
                     )
                             session.add(aerodrome_obstacle)
                     
@@ -341,7 +355,8 @@ def process_ad_data(urls):
                         location=data[18] if data[18] != 'None' else None,
                         description_of_arresting_system=data[19],
                         existence_of_obstacle=data[20] if data[20] != 'None' else None,
-                        remarks=data[21] if data[21] != 'None' else None
+                        remarks=data[21] if data[21] != 'None' else None,
+                        process_id=process_id
                     )
                     
                 session.add(runway_char)   
@@ -368,7 +383,8 @@ def process_ad_data(urls):
                         toda = row_data[2],
                         asda = row_data[3],
                         lda = row_data[4],
-                        remarks = row_data[5]
+                        remarks = row_data[5],
+                        process_id=process_id
                         )
                     
                     session.add(declared_distances)
@@ -538,7 +554,8 @@ def process_ad_data(urls):
                         wing_bar=data[18],  # Set default value for None
                         length_of_stopway_lights=data[19],
                         colour_of_stopway_lights=data[20],
-                        remarks=data[21]
+                        remarks=data[21],
+                        process_id=process_id
     )
                     
                     session.add(approach_and_runway_lighting)   
@@ -628,7 +645,8 @@ def process_ad_data(urls):
     language_of_air_traffic_service=mapped_data.get(headers[5], 'N/A'),
     transition_altitude=mapped_data.get(headers[6], 'N/A'),
     hours_of_applicability=mapped_data.get(headers[7], 'N/A'),
-    remarks=mapped_data.get(headers[8], 'N/A')
+    remarks=mapped_data.get(headers[8], 'N/A'),
+    process_id=process_id
 )
     session.add(airspace_entry)
     # session.commit()
@@ -680,6 +698,7 @@ def process_ad_data(urls):
                             logon_address = data[4],
                             hours_of_operation = data[5],
                             remarks = data[6],
+                            process_id=process_id
                         )
                     session.add(air_traffic_service_communication_facilities)
                 session.commit()

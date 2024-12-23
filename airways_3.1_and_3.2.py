@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import func, text
-from model import LineSegment, Route,ConvLineData,nonConvLineData, session
+from model import LineSegment,AiracData, Route,ConvLineData,nonConvLineData, session
 from sqlalchemy.exc import IntegrityError
 import requests
 from bs4 import BeautifulSoup
@@ -19,9 +19,18 @@ from url_extraction import (
 
 # Print the name of the file that is currently running
 print(f"Running script: {os.path.basename(__file__)}")
-
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 # Function to extract and process routes from URLs
-def process_routes(urls):
+def process_routes(urls,type):
+            process_id = get_active_process_id()
             for url in urls:
                 # Send an HTTP GET request to the URL
                 response = requests.get(url, verify=False)
@@ -116,11 +125,16 @@ def process_routes(urls):
                                         rnp_type=rnp_type,
                                         start_point=start_point,
                                         end_point=end_point,
-                                        remarks=data
+                                        remarks=data,
+                                        type = type,
+                                        process_id=process_id
                                     )
                                     session.add(route) 
                                     
                     session.commit()
+   
+
+   
     
     
 def draw_line_between_coordinates(session, coord1, coord2):
@@ -153,7 +167,7 @@ def conversionDMStoDD(coord):
 def process_lines(urls):
  previous_coordinates = None  # Initialize here
  line_geometry = None  # Initialize line_geometry here as well
-    
+ process_id = get_active_process_id()
  for url in urls:
     response = requests.get(url, verify=False)
     if response.status_code == 200:
@@ -264,7 +278,7 @@ def process_lines(urls):
                          elif direction_of_cruising_levels1 == "↑" and direction_of_cruising_levels2 == "":
                             direction_of_cruising_levelsws = "Backward"
                          elif direction_of_cruising_levels1 == "" and direction_of_cruising_levels2 == "":
-                            direction_of_cruising_levelsws = "Backward"
+                            direction_of_cruising_levelsws = "Both"
                          elif direction_of_cruising_levels1 == "↑" and direction_of_cruising_levels2 == "↑":
                             direction_of_cruising_levelsws = "Backward"
                     
@@ -294,7 +308,8 @@ def process_lines(urls):
                                     mea=mea,
                                     lateral_limits=lateral_limits,
                                     direction_of_cruising_levels=direction_of_cruising_levelsws,
-                                    route_id=route_obj.id
+                                    route_id=route_obj.id,
+                                    process_id=process_id
                                 )
                         # print(airways)
                          session.add(linesegment)
@@ -322,6 +337,7 @@ def conversionDMStoDD1(coord):
 all_significant_points = []
 
 def process_convline(urls):
+ process_id = get_active_process_id()
  for url in urls:
     response = requests.get(url, verify=False)
     if response.status_code == 200:
@@ -339,24 +355,54 @@ def process_convline(urls):
             tables = soup.find_all('table', class_='AmdtTable')
             for index, table in enumerate(tables):
                 rows = table.find_all('tr')
+                coordinate_pattern = r"(\d{6})([NS])\s*(\d{7})([EW])"
+
                 for row in rows[3:]:
                     cells = row.find_all('td')
                     p_tags = cells[1].find_all('p')
+    
                     if len(p_tags) >= 3:
                         name_of_significant_point = p_tags[0].get_text(strip=True) + p_tags[1].get_text(strip=True)
-                        geom = p_tags[2].get_text(strip=True)
-                        match = re.match(r"(\d+\d+)([NS])\s*(\d+\d+)([EW])", geom)
-                        if match:
+                        # print(name_of_significant_point, "edfrg")
+        
+        # Try to get coordinates from p_tags[2] first
+                        geom = None
+                        if len(p_tags) > 2:  # If p_tags[2] exists, check it
+                            geom = p_tags[2].get_text(strip=True)
+                            # Match the coordinates in p_tags[2]
+                            if re.match(coordinate_pattern, geom):
+                                print(f"Found valid coordinates in p_tags[2]: {geom}")
+                            else:
+                                geom = None  # If invalid, reset geom and move to p_tags[3]
+        
+                            # If no valid coordinates were found in p_tags[2], check p_tags[3]
+                        if geom is None and len(p_tags) > 3:  # If p_tags[3] exists, check it
+                            geom = p_tags[3].get_text(strip=True)
+            # Match the coordinates in p_tags[3]
+                            if re.match(coordinate_pattern, geom):
+                                print(f"Found valid coordinates in p_tags[3]: {geom}")
+                            else:
+                                print(f"No valid coordinates found for {name_of_significant_point}")
+
+                        if geom:
+            # If valid coordinates were found, convert to Decimal Degrees
+                            match = re.match(coordinate_pattern, geom)
                             latitude_dd = conversionDMStoDD1(match.group(1) + match.group(2))
                             longitude_dd = conversionDMStoDD1(match.group(3) + match.group(4))
                             point = (longitude_dd, latitude_dd)
-                            all_significant_points.append((route_designator, name_of_significant_point, point))
-
+                            print(f"Matched coordinates: {point}")
+                        else:
+                            # If no valid coordinates were found, set point to None
+                            point = None
+        
+        # Append the significant point with or without valid geometry
+                        all_significant_points.append((route_designator, name_of_significant_point, point))
 # Insert data into LineData table in pairs
- for i in range(len(all_significant_points) - 1):
+ for i in range(len(all_significant_points)-1):
+    print(all_significant_points)
     current_route, start_point_name, start_point_geom = all_significant_points[i]
     next_route, end_point_name, end_point_geom = all_significant_points[i + 1]
-
+    
     if current_route == next_route:
         # Filter for the line segment where the fields are not None or empty strings
         line_segment = session.query(LineSegment).filter(
@@ -364,10 +410,7 @@ def process_convline(urls):
             LineSegment.route_name == current_route ,
             LineSegment.upper_limit != None,
             LineSegment.lower_limit != None,
-            LineSegment.lateral_limits != None,
-            LineSegment.upper_limit != '',
-            LineSegment.lower_limit != '',
-            LineSegment.lateral_limits != ''
+            LineSegment.lateral_limits != None
         ).first()
 
         
@@ -401,7 +444,8 @@ def process_convline(urls):
                 lateral_limits=lateral_limits,
                 direction_of_cruising_levels=direction_of_cruising_levels,
                 type="Conv",
-                remarks=remarks
+                remarks=remarks,
+                process_id=process_id
             )
             conv_line_data.geomcolumn = func.ST_MakeLine(
                 func.ST_MakePoint(start_point_geom[0], start_point_geom[1]),
@@ -418,6 +462,7 @@ all_significant_points1 = []
 
 
 def process_nonconv(urls):
+ process_id = get_active_process_id()
  for url in urls:
     response = requests.get(url, verify=False)
     if response.status_code == 200:
@@ -459,9 +504,6 @@ def process_nonconv(urls):
             LineSegment.upper_limit != None,
             LineSegment.lower_limit != None,
             LineSegment.lateral_limits != None,
-            LineSegment.upper_limit != '',
-            LineSegment.lower_limit != '',
-            LineSegment.lateral_limits != ''
         ).first()
 
        
@@ -499,7 +541,8 @@ def process_nonconv(urls):
                 lateral_limits=lateral_limits,
                 direction_of_cruising_levels=direction_of_cruising_levels,
                 type="Non Conv",
-                remarks=remarks
+                remarks=remarks,
+                process_id=process_id
             )
             conv_line_data.geomcolumn = func.ST_MakeLine(
                 func.ST_MakePoint(start_point_geom[0], start_point_geom[1]),
@@ -521,12 +564,13 @@ def main():
             navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
             if navigation_url:
                 enr_3_1_urls, enr_3_2_urls = search_and_print_enr_links(navigation_url, processed_urls_file)
+    
                 # Here you would process ENR 3.1 and 3.2 URLs
-                # process_routes(enr_3_1_urls)  # Process ENR 3.1 links
-                # process_routes(enr_3_2_urls)  # Process ENR 3.2 links
+                process_routes(enr_3_1_urls,"Conv")  # Process ENR 3.1 links
+                process_routes(enr_3_2_urls,"Non Conv")  # Process ENR 3.2 links
                 # process_lines(enr_3_1_urls)
                 # process_lines(enr_3_2_urls)
-                process_convline(enr_3_1_urls)
+                # process_convline(enr_3_1_urls)
                 # process_nonconv(enr_3_2_urls)
 
         

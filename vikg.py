@@ -1,4 +1,4 @@
-from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding, session
+from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding,AiracData, session
 from sqlalchemy import select
 
 
@@ -13,6 +13,15 @@ import re
 AIRPORT_ICAO = "VIKG"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def conversionDMStoDD(coord):
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -43,6 +52,7 @@ def is_valid_data(data):
 
 
 def extract_insert_apch(file_name, tables, rwy_dir):
+    process_id = get_active_process_id()
     waypoints_list = []
     type_list = []
     lat_lon_list = []
@@ -143,6 +153,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     type=typ.strip(),
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
+                    process_id=process_id
                 )
                 session.add(new_waypoint)
 
@@ -154,9 +165,11 @@ def extract_insert_apch(file_name, tables, rwy_dir):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
-    
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in apch_data_df.iloc[1:].iterrows():
         row = list(row)
         waypoint_obj = None
@@ -175,6 +188,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
             print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
+                sequence_number = sequence_number,
                 seq_num=int(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
@@ -189,6 +203,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                 dst_time=row[5].strip() if is_valid_data(row[5]) else None,
                 vpa_tch=row[10].strip() if is_valid_data(row[10]) else None,
                 nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+                process_id=process_id
             )
             session.add(proc_des_obj)
             if is_valid_data(data := row[3]):
@@ -196,6 +211,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     proc_des_obj.fly_over = True
                 elif data == "N":
                     proc_des_obj.fly_over = False
+            sequence_number += 1
 
         else:
                 data_parts = row[0].split(" \n")
@@ -233,6 +249,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                         print(course_angle)
                         proc_des_obj = ProcedureDescription(
                             procedure=procedure_obj,
+                            sequence_number = sequence_number,
                             seq_num=data_parts[0].strip(),
                             waypoint=waypoint_obj,
                             path_descriptor=data_parts[1].strip(),
@@ -258,6 +275,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                             nav_spec=data_parts[11].strip()
                             if is_valid_data(data_parts[11])
                             else None,
+                            process_id=process_id
                         )
                         session.add(proc_des_obj)
                         if is_valid_data(data := data_parts[3]):
@@ -265,6 +283,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                                 proc_des_obj.fly_over = True
                             elif data == "N":
                                 proc_des_obj.fly_over = False
+                        sequence_number += 1
 
 
     
@@ -272,7 +291,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
 
 def extract_insert_apch1(file_name, tables, rwy_dir):
 # waypoint satart
-
+    process_id = get_active_process_id()
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
@@ -313,6 +332,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         name=waypoint_name1,
                         coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
+                        process_id=process_id
                     )
                 )
 
@@ -330,8 +350,11 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in coding_df.iterrows():
         if not row[0].strip().isdigit():
           continue
@@ -347,6 +370,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
+            sequence_number = sequence_number,
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
@@ -359,6 +383,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             vpa_tch=row[10].strip() if is_valid_data(row[10]) else None,
             # role_theFix =row[10].strip() if is_valid_data(row[10]) else None,
             nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+            process_id=process_id
         )
         session.add(proc_des_obj)
         if is_valid_data(data := row[1]):
@@ -366,6 +391,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
+        sequence_number += 1
 
 
 def main():

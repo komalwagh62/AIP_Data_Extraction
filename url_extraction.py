@@ -284,51 +284,51 @@ def fetch_and_print_ad_data(navigation_url, processed_file="AD_urls.txt"):
     return new_urls
 
 
-# Search for ENR 5.1 link and print them if not already processed
-def search_and_print_restricted_links(navigation_url, processed_restricted_file):
-    processed_urls = load_processed_urls(processed_restricted_file)
-    script_name = os.path.basename(__file__)
+# # Search for ENR 5.1 link and print them if not already processed
+# def search_and_print_restricted_links(navigation_url, processed_restricted_file):
+#     processed_urls = load_processed_urls(processed_restricted_file)
+#     script_name = os.path.basename(__file__)
 
-    print(f"Checking if Navigation URL '{navigation_url}' has already been processed by '{script_name}'...")
+#     print(f"Checking if Navigation URL '{navigation_url}' has already been processed by '{script_name}'...")
 
-    # Skip processing if this navigation URL was already handled by this script
-    if f"{script_name}:{navigation_url}" in processed_urls:
-        print(f"Navigation URL '{navigation_url}' already processed by '{script_name}'.")
-        return []
+#     # Skip processing if this navigation URL was already handled by this script
+#     if f"{script_name}:{navigation_url}" in processed_urls:
+#         print(f"Navigation URL '{navigation_url}' already processed by '{script_name}'.")
+#         return []
 
-    base_url = get_base_url(navigation_url)
-    print(f"Base URL: {base_url}")
+#     base_url = get_base_url(navigation_url)
+#     print(f"Base URL: {base_url}")
 
-    response = fetch_url_with_retries(navigation_url)
-    if response is None:
-        print("Failed to fetch the navigation content after multiple attempts.")
-        return []
+#     response = fetch_url_with_retries(navigation_url)
+#     if response is None:
+#         print("Failed to fetch the navigation content after multiple attempts.")
+#         return []
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    links = soup.find_all('a', href=True)
-    enr_5_1_urls = []
+#     soup = BeautifulSoup(response.text, 'html.parser')
+#     links = soup.find_all('a', href=True)
+#     enr_5_1_urls = []
 
-    for link in links:
-        link_id = link.get('id', 'None')
-        href = link['href']
-        modified_url = f"{base_url}{href.split('/')[-1]}"  # Create the final URL
+#     for link in links:
+#         link_id = link.get('id', 'None')
+#         href = link['href']
+#         modified_url = f"{base_url}{href.split('/')[-1]}"  # Create the final URL
 
-        # Skip if the full URL is already processed by this script
-        if f"{script_name}:{modified_url}" in processed_urls:
-            print(f"Skipping already processed URL: {modified_url}")
-            continue
+#         # Skip if the full URL is already processed by this script
+#         if f"{script_name}:{modified_url}" in processed_urls:
+#             print(f"Skipping already processed URL: {modified_url}")
+#             continue
 
-        # Match ENR 4.4 links
-        if re.match(r'^ENR 5\.1', link_id):
-            enr_5_1_urls.append(modified_url)
-            print(f"ID: {link_id}, Modified URL: {modified_url}")
-            save_processed_url(processed_restricted_file, f"{script_name}:{modified_url}")  # Save URL immediately
+#         # Match ENR 4.4 links
+#         if re.match(r'^ENR 5\.1', link_id):
+#             enr_5_1_urls.append(modified_url)
+#             print(f"ID: {link_id}, Modified URL: {modified_url}")
+#             save_processed_url(processed_restricted_file, f"{script_name}:{modified_url}")  # Save URL immediately
 
-    # Mark the main navigation URL as processed
-    save_processed_url(processed_restricted_file, f"{script_name}:{navigation_url}")
-    print(f"Saved Navigation URL '{navigation_url}' as processed by '{script_name}'.")
+#     # Mark the main navigation URL as processed
+#     save_processed_url(processed_restricted_file, f"{script_name}:{navigation_url}")
+#     print(f"Saved Navigation URL '{navigation_url}' as processed by '{script_name}'.")
 
-    return enr_5_1_urls
+#     return enr_5_1_urls
 
 
 
@@ -377,3 +377,60 @@ def search_and_print_controlled_links(navigation_url, processed_controlled_file)
     print(f"Saved Navigation URL '{navigation_url}' as processed by '{script_name}'.")
 
     return enr_2_1_urls
+
+
+# Search for ENR 5.1 link and print them if not already processed
+def search_and_print_restricted_links(navigation_url, processed_restricted_file):
+    processed_urls = load_processed_urls(processed_restricted_file)
+    script_name = os.path.basename(__file__)  # Get the current script name
+
+    print(f"Checking if Navigation URL '{navigation_url}' has already been processed by '{script_name}'...")
+
+    # Check if the navigation URL has already been processed by this script
+    if f"{script_name}:{navigation_url}" in processed_urls:
+        print(f"Navigation URL '{navigation_url}' already processed by '{script_name}'.")
+        return [], []
+
+    base_url = get_base_url(navigation_url)
+    print(f"Base URL: {base_url}")
+
+    response = fetch_url_with_retries(navigation_url)
+    if response is None:
+        print("Failed to fetch the navigation content after multiple attempts.")
+        return [], []
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a', href=True)
+    enr_5_1_urls = []
+    enr_5_2_urls = []
+
+    print("ENR 5.1 links:")
+    for link in links:
+        link_id = link.get('id', 'None')  # Default to 'None' to avoid KeyError
+        href = link['href']
+
+        # Skip if the URL is already processed by this script
+        if f"{script_name}:{href}" in processed_urls:
+            print(f"Skipping already processed URL: {href}")
+            continue
+
+        # Match ENR 3.1 links
+        if re.match(r'^ENR 5\.1', link_id):
+            modified_url = f"{base_url}{href.split('/')[-1]}"
+            enr_5_1_urls.append(modified_url)
+            print(f"ID: {link_id}, Modified URL: {modified_url}")
+            save_processed_url(processed_restricted_file, modified_url)  # Save the URL immediately
+
+        # Match ENR 3.2 links
+        elif re.match(r'^ENR 5\.2', link_id):
+            modified_url = f"{base_url}{href.split('/')[-1]}"
+            enr_5_2_urls.append(modified_url)
+            print(f"ID: {link_id}, Modified URL: {modified_url}")
+            save_processed_url(processed_restricted_file, modified_url)  # Save the URL immediately
+
+    # Save the navigation URL after processing all links
+    save_processed_url(processed_restricted_file, navigation_url)
+    print(f"Saved Navigation URL '{navigation_url}' as processed by '{script_name}'.")
+
+    return enr_5_1_urls, enr_5_2_urls
+

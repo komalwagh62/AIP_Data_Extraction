@@ -2,7 +2,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import re
-from model import AirportData, session
+from model import AirportData,AiracData, session
 from shapely import wkt
 from url_extraction import (
     find_eaip_url,
@@ -34,8 +34,18 @@ def conversionDMStoDD(coord):
         lon_dd = (lon_degrees + lon_minutes / 60 + lon_seconds / 3600) * direction[dir_part]
         return lon_dd
       
-
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
+    
 def fetch_airports_details(airport_url):
+    process_id = get_active_process_id()
     # Fetch the content from the given airport URL
     response = requests.get(airport_url, verify=False)
     
@@ -144,7 +154,8 @@ def fetch_airports_details(airport_url):
                                     geom=ewkb_geometry,
                                     distance=distance,
                                     aerodrome_elevation=aerodrome_elevation,
-                                    magnetic_variation=magnetic_variation
+                                    magnetic_variation=magnetic_variation,
+                                    process_id = process_id
                                 )
                             session.add(airport_data)
                             print(airport_data)

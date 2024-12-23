@@ -1,4 +1,4 @@
-from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding, session
+from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding,AiracData, session
 from sqlalchemy import select
 
 ##################
@@ -15,6 +15,15 @@ import pandas as pd
 AIRPORT_ICAO = "VIJP"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def conversionDMStoDD(coord):
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -45,6 +54,7 @@ def is_valid_data(data):
 
 
 def extract_insert_sid(type_):
+    process_id = get_active_process_id()
     pdf_files = [
         file
         for file in os.listdir(FOLDER_PATH)
@@ -53,6 +63,8 @@ def extract_insert_sid(type_):
     pdf_files.sort()
     prev_procedure_obj = None
     seq_num = 1
+    # Initialize sequence number tracker
+    sequence_number = 1
     for pdf_file in pdf_files:
         pdf_path = os.path.join(FOLDER_PATH, pdf_file)
         data_frame = camelot.read_pdf(pdf_path, pages="all")[0].df
@@ -70,9 +82,10 @@ def extract_insert_sid(type_):
                     type=type_,
                     name=name,
                     designator=designator,
+                    process_id=process_id
                 )
                 session.add(procedure_obj)
-                seq_num = 1
+                
                 prev_procedure_obj = procedure_obj
             elif row[0][0].isdigit() and len(row[0].split("\n")) > 1:
                 data_parts = row[0].split(" \n")
@@ -92,8 +105,10 @@ def extract_insert_sid(type_):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+                
                 proc_des_obj = ProcedureDescription(
                     procedure=prev_procedure_obj,  # Use the previous procedure object
+                    sequence_number = sequence_number,
                     seq_num=seq_num,
                     waypoint=waypoint_obj,
                     path_descriptor=data_parts[2].strip(),
@@ -119,6 +134,7 @@ def extract_insert_sid(type_):
                     nav_spec=data_parts[10].strip()
                     if is_valid_data(data_parts[10])
                     else None,
+                    process_id=process_id
                 )
                 session.add(proc_des_obj)
                 if is_valid_data(data := row[1]):
@@ -126,7 +142,8 @@ def extract_insert_sid(type_):
                         proc_des_obj.fly_over = True
                     elif data == "N":
                         proc_des_obj.fly_over = False
-                seq_num += 1  # Increment sequence number for next row
+                seq_num += 1
+                sequence_number += 1
             elif row[-1].strip():
                 waypoint_name = row[0].strip()
                 waypoint_obj = (
@@ -139,8 +156,10 @@ def extract_insert_sid(type_):
                         # Check if we have exactly two angle values
                 if len(angles) == 2:
                     course_angle = f"{angles[0]}({angles[1]})"
+                print(row[0])
                 proc_des_obj = ProcedureDescription(
                     procedure=prev_procedure_obj,  # Use the previous procedure object
+                    sequence_number = sequence_number,
                     seq_num=seq_num,
                     waypoint=waypoint_obj,
                     path_descriptor=row[2].strip(),
@@ -152,6 +171,7 @@ def extract_insert_sid(type_):
                     dst_time=row[8].strip() if is_valid_data(row[8]) else None,
                     vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
                     nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+                    process_id=process_id
                 )
                 session.add(proc_des_obj)
                 if is_valid_data(data := row[1]):
@@ -160,9 +180,11 @@ def extract_insert_sid(type_):
                     elif data == "N":
                         proc_des_obj.fly_over = False
                 seq_num += 1  # Increment sequence number for next row
+                sequence_number += 1
 
 
 def extract_insert_star(type_):
+    process_id = get_active_process_id()
     pdf_files = [
         file
         for file in os.listdir(FOLDER_PATH)
@@ -172,12 +194,15 @@ def extract_insert_star(type_):
     prev_procedure_obj = None
     procedure_obj = None
     seq_num = 1  # Initialize sequence number
+    # Initialize sequence number tracker
+    sequence_number = 1
     for pdf_file in pdf_files:
         pdf_path = os.path.join(FOLDER_PATH, pdf_file)
         data_frame = camelot.read_pdf(pdf_path, pages="all")[0].df
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", pdf_file).groups()[0]
         procedure_obj = None  # Initialize procedure object
         i = 0
+        
         for _, row in data_frame.iterrows():
             procedure_name_match = re.match(r"[A-Z]+\s+\d+[A-Z]*|1[AC]", row[0])
             if procedure_name_match:  # Assuming procedure names are in the first column
@@ -197,6 +222,7 @@ def extract_insert_star(type_):
                     rwy_dir=rwy_dir,
                     name=procedure_name,
                     type=type_,
+                    process_id=process_id
                 )
                 session.add(procedure_obj)
                 prev_procedure_obj = procedure_obj
@@ -222,13 +248,11 @@ def extract_insert_star(type_):
                             course_angle = f"{angles[0]}({angles[1]})"
                         proc_des_obj = ProcedureDescription(
                             procedure=prev_procedure_obj,
+                            sequence_number = sequence_number,
                             seq_num=seq_num,
                             waypoint=waypoint_obj,
                             path_descriptor=row[2].strip(),
-                            course_angle=row[3]
-                            .replace("\n", "")
-                            .replace("  ", "")
-                            .replace(" )", ")"),
+                            course_angle=course_angle,
                             turn_dir=row[4].strip() if is_valid_data(row[4]) else None,
                             altitude_ul=row[5].strip()
                             if is_valid_data(row[5])
@@ -244,6 +268,7 @@ def extract_insert_star(type_):
                             nav_spec=row[10].strip()
                             if is_valid_data(row[10])
                             else None,
+                            process_id=process_id
                         )
                         session.add(proc_des_obj)
                         if is_valid_data(data := row[1]):
@@ -252,6 +277,7 @@ def extract_insert_star(type_):
                             elif data == "N":
                                 proc_des_obj.fly_over = False
                         seq_num += 1  # Increment sequence number for next row
+                        sequence_number += 1
 
                 elif row[0][0].isdigit() and len(row[0].split("\n")) > 1:
                     data_parts = row[0].split(" \n")
@@ -272,6 +298,7 @@ def extract_insert_star(type_):
                     )
                     proc_des_obj = ProcedureDescription(
                         procedure=prev_procedure_obj,
+                        sequence_number=sequence_number,
                         seq_num=seq_num,
                         waypoint=waypoint_obj,
                         path_descriptor=data_parts[2].strip(),
@@ -297,6 +324,7 @@ def extract_insert_star(type_):
                         nav_spec=data_parts[10].strip()
                         if is_valid_data(data_parts[10])
                         else None,
+                        process_id=process_id
                     )
                     session.add(proc_des_obj)
                     if is_valid_data(data := row[1]):
@@ -305,9 +333,11 @@ def extract_insert_star(type_):
                         elif data == "N":
                             proc_des_obj.fly_over = False
                     seq_num += 1  # Increment sequence number for next row
+                    sequence_number += 1
 
 
 def extract_insert_apch1(file_name, tables, rwy_dir):
+    process_id = get_active_process_id()
     coding_df = tables[0].df
     coding_df = coding_df.drop(index=[0, 1])
     apch_data_df = coding_df[coding_df.iloc[:, -2] == "RNP \nAPCH"]
@@ -357,19 +387,23 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                     name=waypoint.strip(),
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
+                    process_id=process_id
                 )
                 session.add(new_waypoint)
                 session.commit()
     procedure_name = (
-        re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
+        re.search(r"(RNP.+)-TABLE", file_name).groups()[0].replace("-", " ")
     )
     procedure_obj = Procedure(
         airport_icao=AIRPORT_ICAO,
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in apch_data_df.iterrows():
         waypoint_obj = None
         if is_valid_data(row[4]):
@@ -387,10 +421,11 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             course_angle = f"{angles[0]}({angles[1]})"
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
+            sequence_number = sequence_number,
             seq_num=int(row[1]),
             waypoint=waypoint_obj,
             path_descriptor=row[5].strip(),
-            course_angle=row[6].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[8].strip() if is_valid_data(row[8]) else None,
             altitude_ll=row[9].strip() if is_valid_data(row[9]) else None,
             speed_limit=row[10].strip() if is_valid_data(row[10]) else None,
@@ -398,6 +433,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             vpa_tch=row[12].strip() if is_valid_data(row[12]) else None,
             role_of_the_fix=row[13].strip() if is_valid_data(row[13]) else None,
             nav_spec=row[15].strip() if is_valid_data(row[15]) else None,
+            process_id=process_id
         )
         session.add(proc_des_obj)
         if is_valid_data(data := row[2]):
@@ -405,21 +441,25 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
+        sequence_number += 1
 
 
 def extract_insert_apch2(file_name, rwy_dir, tables):
+    process_id = get_active_process_id()
+    
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
         # print("Waypoint Table:", waypoint_df)  # Add this line to print the waypoint_df
         if re.search(r"Waypoint List", waypoint_df[0][0], re.I):
-            waypoint_df = waypoint_df.drop(0)
+            waypoint_df = waypoint_df.drop([0, 1,2], axis=0).reset_index(drop=True)
         for _, row in waypoint_df.iterrows():
             row = list(row)
             
             row = [x for x in row if x.strip()]
-            if len(row) < 2:  # length of the row list is less than 2.
+            if len(row) > 2:  # length of the row list is less than 2.
                 continue
+            print(row)
             waypoint_name1 = row[0].strip()
             extracted_data1 = [
                 item
@@ -428,6 +468,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                 )
                 for item in match
             ]
+            print(extracted_data1)
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
@@ -449,22 +490,28 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                         name=waypoint_name1,
                         coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
+                        process_id=process_id
                     )
                 )
     coding_df = tables[0].df
-    coding_df = coding_df.drop(0)
+    coding_df = coding_df.drop(index=[0, 1,2])
     # print(coding_df)
     procedure_name = (
-        re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
+        re.search(r"(RNP.+)-TABLE", file_name).groups()[0].replace("-", " ")
     )
     procedure_obj = Procedure(
         airport_icao=AIRPORT_ICAO,
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in coding_df.iterrows():
+        row = list(row)
+        print(row)
         waypoint_obj = None
         if is_valid_data(row[2]):
             waypoint_obj = (
@@ -477,30 +524,34 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                         # Check if we have exactly two angle values
         if len(angles) == 2:
             course_angle = f"{angles[0]}({angles[1]})"
-        # Create ProcedureDescription instance
+        # # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
-            seq_num=int(row[0]),
+            sequence_number = sequence_number,
+            seq_num=(row[0]),
             waypoint=waypoint_obj,
-            path_descriptor=row[3].strip(),
+            path_descriptor=row[1].strip(),
             course_angle=course_angle,
-            turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
-            altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
-            speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
-            dst_time=row[8].strip() if is_valid_data(row[8]) else None,
+            turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
+            altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
+            speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
+            dst_time=row[5].strip() if is_valid_data(row[5]) else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
-            role_of_the_fix=row[10].strip() if is_valid_data(row[10]) else None,
-            nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+            # role_of_the_fix=row[10].strip() if is_valid_data(row[10]) else None,
+            nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+            process_id=process_id
         )
         session.add(proc_des_obj)
-        if is_valid_data(data := row[1]):
+        if is_valid_data(data := row[3]):
             if data == "Y":
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
+        sequence_number += 1
 
 
 def insert_terminal_holdings(file_name, type_):
+    process_id = get_active_process_id()
     file_path = FOLDER_PATH + file_name
     # print(file_path)
     tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="1")
@@ -525,6 +576,7 @@ def insert_terminal_holdings(file_name, type_):
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ul=row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
+            # process_id=process_id
         )
         session.add(term_hold_obj)
 
@@ -539,11 +591,13 @@ def main():
             holding_waypoints_file_names.append(file_name)
         elif file_name.find("WAYPOINTS") > -1:
             waypoint_file_names.append(file_name)
-        elif file_name.find("CODING") > -1:
+        elif file_name.find("TABLE") > -1:
             if file_name.find("RNP") > -1:
                 apch_coding_file_names.append(file_name)
     # loop iterates through the list of waypoint_file_names
+    process_id = get_active_process_id()
     for waypoint_file_name in waypoint_file_names:
+        
         df = camelot.read_pdf(os.path.join(FOLDER_PATH, waypoint_file_name), pages="1")[
             0
         ].df  # uses camelot to read the first page of the PDF
@@ -595,6 +649,7 @@ def main():
                         name=waypoint_name1,
                         coordinates_dd = coordinates,
                         geom=f"POINT({lng1} {lat1})",
+                        process_id=process_id
                     )
                 )
             if len(row) > 2:
@@ -625,9 +680,10 @@ def main():
                             name=waypoint_name2,
                             coordinates_dd = coordinates,
                             geom=f"POINT({lng2} {lat2})",
+                            process_id=process_id
                         )
                     )
-
+    
     extract_insert_sid("SID")
     extract_insert_star("STAR")
     for file_name in apch_coding_file_names:

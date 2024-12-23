@@ -4,11 +4,20 @@ import os
 
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
+from model import AiracData, session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
 ##################
 # EXTRACTOR CODE #
 ##################
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 AIRPORT_ICAO = "VOHS"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -43,6 +52,7 @@ def is_valid_data(data):
 
 
 def extract_insert_apch(file_name, rwy_dir, tables):
+    process_id = get_active_process_id()
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
@@ -81,6 +91,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     name=row[0].strip(),
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng1} {lat1})",
+                    process_id=process_id
                 )
             )
     coding_df = tables[0].df
@@ -95,9 +106,11 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
-
+    # Initialize sequence number tracker
+    sequence_number = 1
     for _, row in apch_data_df.iterrows():
         row = list(row)
         # print(row)
@@ -113,6 +126,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
+                sequence_number = sequence_number,
                 seq_num=row[0],
                 waypoint=waypoint_obj,
                 path_descriptor=row[3].strip(),
@@ -127,6 +141,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 dst_time=row[5].replace("\n", "").replace(" ", ""),
                 vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
                 nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+                process_id=process_id
             )
 
             session.add(proc_des_obj)
@@ -135,8 +150,69 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     proc_des_obj.fly_over = True
                 elif data == "N":
                     proc_des_obj.fly_over = False
-
+            sequence_number += 1
+        else:
+            data_parts = row[0].split(" \n")
+                # # print(data_parts)
+                # if data_parts[0].isdigit() or data_parts[0].endswith("Mag") or data_parts[-1] == 'RNP APCH':
+            if data_parts[0].endswith("Mag /"):
+                data_to_insert = data_parts[0] + " " + data_parts[-1]
+                data_parts.insert(4, data_to_insert)
+                data_parts.pop(0)
+                data_parts.pop(-1)
+                data_parts[3], data_parts[4] = data_parts[4], data_parts[3]
+                data_parts.insert(5, data_parts[-3])
+                data_parts.pop(-3)
+            if len(data_parts) > 2:
+             print(data_parts)
+             waypoint_name = data_parts[2]
+             if is_valid_data(waypoint_name):
+                    waypoint_obj = (
+                        session.query(Waypoint)
+                        .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
+                        .first()
+                    )
+             course_angle = data_parts[4].strip().replace("\n", "").replace(" ", "")
+             proc_des_obj = ProcedureDescription(
+                    procedure=procedure_obj,
+                    sequence_number=sequence_number,
+                    seq_num=data_parts[0].strip(),
+                    waypoint=waypoint_obj,
+                    path_descriptor=data_parts[3].strip(),
+                    course_angle=course_angle,
+                    turn_dir=data_parts[6].strip()
+                    if is_valid_data(data_parts[6])
+                    else None,
+                    
+                    altitude_ll=data_parts[7].strip()
+                    if is_valid_data(data_parts[7])
+                    else None,
+                    speed_limit=data_parts[8].strip()
+                    if is_valid_data(data_parts[8])
+                    else None,
+                    dst_time=data_parts[5].strip()
+                    if is_valid_data(data_parts[5])
+                    else None,
+                    vpa_tch=data_parts[9].strip()
+                    if is_valid_data(data_parts[9])
+                    else None,
+                    nav_spec=data_parts[10].strip()
+                    if is_valid_data(data_parts[10])
+                    else None,
+                    process_id=process_id
+                )
+                
+             session.add(proc_des_obj)
+             if is_valid_data(data := data_parts[1]):
+                    if data == "Y":
+                        proc_des_obj.fly_over = True
+                    elif data == "N":
+                        proc_des_obj.fly_over = False
+             sequence_number += 1
     
+
+    # ['10', 'Y', 'HS709', 'HM', '270.53° (269.28°)', '1 MIN', 'L', '+4600.00', '-', '-', 'RNP APCH']
+# ['270.47° Mag /', '10', 'Y', 'HS722', 'HM', 'L', '+4600.00', '-230.00', '1 MIN', '-', 'RNP APCH', '269.22° True']
 
 def main():
     file_names = os.listdir(FOLDER_PATH)

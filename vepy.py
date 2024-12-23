@@ -4,7 +4,7 @@ import os
 
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription
+from model import AiracData, session, Waypoint, Procedure, ProcedureDescription
 
 
 
@@ -12,7 +12,7 @@ from model import session, Waypoint, Procedure, ProcedureDescription
 # EXTRACTOR CODE #
 ##################
 
-import pdftotext
+import fitz  # PyMuPDF
 
 AIRPORT_ICAO = "VEPY"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
@@ -38,7 +38,15 @@ def conversionDMStoDD(coord):
     return decimal_degrees
 
 
-
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 
 def is_valid_data(data):
@@ -51,10 +59,13 @@ def is_valid_data(data):
 
 
 def extract_insert_sid_star(file_name):
+    process_id = get_active_process_id()
     rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
     seq_num = 1
+    # Initialize sequence number tracker
+    sequence_number = 1
     with open(FOLDER_PATH + file_name, "rb") as f:
-        pdf = pdftotext.PDF(f)
+        pdf = fitz.open(f)
         if len(pdf) >= 1:
             if re.search(r"TABULAR DESCRIPTION BGD 1 DEPARTURE-VEPY", pdf[0], re.I):
                 # Extract procedure name from the file name
@@ -65,7 +76,8 @@ def extract_insert_sid_star(file_name):
                     airport_icao=AIRPORT_ICAO,
                     rwy_dir=rwy_dir,
                     type="SID",
-                    name=procedure_name
+                    name=procedure_name,
+                    process_id=process_id
                 )
                 session.add(procedure_obj)
                 
@@ -88,6 +100,7 @@ def extract_insert_sid_star(file_name):
                         # print(waypoint_obj)
                     proc_des_obj = ProcedureDescription(
                         procedure=procedure_obj,
+                        sequence_number=sequence_number,
                         seq_num=seq_num,
                         waypoint=waypoint_obj,
                         path_descriptor=row[3].strip(),
@@ -102,6 +115,7 @@ def extract_insert_sid_star(file_name):
                         dst_time=row[9].strip() if is_valid_data(row[9]) else None,
                         vpa_tch=row[10].strip() if is_valid_data(row[10]) else None,
                         nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+                        process_id=process_id
                     )
                     session.add(proc_des_obj)
                     if is_valid_data(data := row[1]):
@@ -110,6 +124,7 @@ def extract_insert_sid_star(file_name):
                         elif data == "N":
                             proc_des_obj.fly_over = False
                     seq_num += 1
+                    sequence_number += 1
 
                 session.commit()
 
@@ -122,6 +137,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
     apch_data_df = coding_df[coding_df.iloc[:, -2] == "RNP \nAPCH"]
     apch_data_df = apch_data_df.loc[:, (apch_data_df != "").any(axis=0)]
     print(apch_data_df)
+    process_id = get_active_process_id()
     if not coding_df.empty and len(coding_df.columns) > 7:
         waypoint_list = coding_df.iloc[
             :, 3
@@ -173,6 +189,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     name=waypoint.strip(),
                     coordinates_dd = coordinates,
                     geom=f"POINT({lng} {lat})",
+                    process_id=process_id
                 )
                 session.add(new_waypoint)
                 session.commit()
@@ -184,6 +201,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id=process_id
     )
     session.add(procedure_obj)
     
@@ -204,7 +222,8 @@ def main():
             
     for waypoint_file_name in waypoint_file_names:
         with open(FOLDER_PATH + waypoint_file_name, "rb") as f:
-            pdf = pdftotext.PDF(f)
+            pdf = fitz.open(f)
+            process_id = get_active_process_id()
             if len(pdf) >= 1:
                 if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
                     table_index = 1 
@@ -247,6 +266,7 @@ def main():
                                     name=row[0].strip(),
                                     coordinates_dd = coordinates,
                                     geom=f"POINT({lng} {lat})",
+                                    process_id=process_id
                                 )
                             )
                         

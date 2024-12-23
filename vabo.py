@@ -1,10 +1,10 @@
 import camelot
 import re
 import os
-import pdftotext
+import fitz  # PyMuPDF
 from sqlalchemy import select
 
-from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
+from model import AiracData, session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
 ##################
 # EXTRACTOR CODE #
 ##################
@@ -12,6 +12,15 @@ from model import session, Waypoint, Procedure, ProcedureDescription,TerminalHol
 AIRPORT_ICAO = "VABO"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
+# Function to get the active process_id from AiracData table
+def get_active_process_id():
+    # Query the AiracData table for the most recent active record
+    active_record = session.query(AiracData).filter(AiracData.status == True).order_by(AiracData.created_At.desc()).first()
+    if active_record:
+        return active_record.id  # Assuming process_name is the desired process_id
+    else:
+        print("No active AIRAC record found.")
+        return None
 
 def conversionDMStoDD(coord):
     direction = {"N": 1, "S": -1, "E": 1, "W": -1}
@@ -43,6 +52,7 @@ def is_valid_data(data):
 
 
 def extract_insert_apch(file_name, rwy_dir, tables):
+    process_id = get_active_process_id()
     coding_df = tables[0].df
     coding_df = coding_df.drop(0)
     # print(coding_df)
@@ -54,8 +64,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         rwy_dir=rwy_dir,
         type="APCH",
         name=procedure_name,
+        process_id = process_id
     )
     session.add(procedure_obj)
+    sequence_number = 1
     for _, row in coding_df.iloc[1:].iterrows():
         waypoint_obj = None
         if is_valid_data(row[2]):
@@ -64,15 +76,20 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
-        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
-        angles = course_angle.split()
-                # Check if we have exactly two angle values
+        course_angle = row[4].replace("\n", "").replace("  ", " ").replace(" )", ")").strip()
+        course_angle = course_angle.replace("Mag", "").replace("True", "").replace("/", " / ")
+        angles = [angle.strip() for angle in course_angle.split(" / ")]
+
+#        Check if we have exactly two angle values
         if len(angles) == 2:
             course_angle = f"{angles[0]}({angles[1]})"
+
+
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             seq_num=int(row[0]),
+            sequence_number = sequence_number,
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
             course_angle=course_angle,
@@ -82,6 +99,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             dst_time=row[5].strip() if is_valid_data(row[5]) else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
             nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
+            process_id=process_id
         )
         session.add(proc_des_obj)
         if is_valid_data(data := row[3]):
@@ -89,6 +107,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
+        sequence_number += 1
 
 
 
@@ -104,17 +123,19 @@ def main():
             apch_coding_file_names.append(file_name)
 
     for waypoint_file_name in waypoint_file_names:
+        process_id = get_active_process_id()
         with open(FOLDER_PATH + waypoint_file_name, "rb") as f:
-            pdf = pdftotext.PDF(f)
+            pdf = fitz.open(f)
             if len(pdf) >= 1:
-                if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
+                # if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
                     df = camelot.read_pdf(
                         FOLDER_PATH + waypoint_file_name,
                         pages="all",  # str(table_index + 1),  # Page numbers start from 1
                     )[1].df
+                    print(df)
                     
-                    if re.search(r"WAYPOINT INFORMATION-", str(df[1]), re.I):
-                        df = df.drop(0)
+                    df = df.drop([0])
+                        
                     for _, row in df.iterrows():
                         row = list(row)
                         # print(row)
@@ -146,6 +167,7 @@ def main():
                                 name=row[0].strip(),
                                 coordinates_dd = coordinates,
                                 geom=f"POINT({lng1} {lat1})",
+                                process_id=process_id
                             )
                         )
     for file_name in apch_coding_file_names:
