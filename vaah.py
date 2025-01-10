@@ -91,7 +91,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
-        
+         cleaned_course_angle = ' '.join(row[4].split('\n')).strip()
+        #  print("Cleaned Course Angle:", cleaned_course_angle)
          # Process the course angle format
          course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace(" / ", "")
          angles = course_angle.split()
@@ -102,7 +103,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
          proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             sequence_number=sequence_number,  # Assign sequence number based on iteration
-            seq_num=int(row[0]),
+            seq_num=(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
             course_angle=course_angle,
@@ -203,7 +204,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                                 .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                                 .first()
                             )
+                            print(waypoint_obj,"Dertgy")
                         #  print(data_parts[4])
+                         cleaned_course_angle = ' '.join(row[4].split('\n')).strip()
+                         print("Cleaned Course Angle:", cleaned_course_angle)
                          course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
                         #  print(course_angle)
                          angles = course_angle.split()
@@ -245,77 +249,59 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                             elif data == "N":
                                 proc_des_obj.fly_over = False
                          sequence_number += 1
-                
-
-                            
-                        
-                    
-                    
-    
-    # # Commit the session to save all changes
-    # session.commit()
-    # print("All data has been successfully inserted into the database.")
-
 
 
 def main():
     file_names = os.listdir(FOLDER_PATH)
     waypoint_file_names = []
     apch_coding_file_names = []
+    
     for file_name in file_names:
         if file_name.find("TABLE") > -1: 
             if file_name.find("RNP") > -1:
                 waypoint_file_names.append(file_name)
                 apch_coding_file_names.append(file_name)
-           
 
     for waypoint_file_name in waypoint_file_names:
         process_id = get_active_process_id()
+        # Open the file using 'with' statement
         with open(FOLDER_PATH + waypoint_file_name, "rb") as f:
-            pdf = fitz.open(f)
-
-            # pdf = pdftotext.PDF(f)
-            if len(pdf) >= 1:
-                # if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
+            with fitz.open(f) as pdf:  # Open the PDF file using fitz in a with block
+                if len(pdf) >= 1:
                     waypoint_df = camelot.read_pdf(
                         FOLDER_PATH + waypoint_file_name,
-                        pages="all",  # str(table_index + 1),  # Page numbers start from 1
+                        pages="all"
                     )[1].df
-                    # print(df)
-    #                 if re.search(r"WAYPOINT INFORMATION-", str(df[1]), re.I):
-                    waypoint_df = waypoint_df.drop(index=[0, 1,2])
+                    waypoint_df = waypoint_df.drop(index=[0, 1, 2])
                     
                     for _, row in waypoint_df.iterrows():
                         row = list(row)
-                        # print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue
-                       
+                        
                         lat, long = row[1].split("   ") or row[1].split("    ")
                         lat1 = conversionDMStoDD(lat)
                         lng1 = conversionDMStoDD(long)
                         coordinates = f"{lat1} {lng1}"
+                        
                         session.add(
                             Waypoint(
-                            airport_icao=AIRPORT_ICAO,
-                            name=row[0].strip(),
-                            coordinates_dd = coordinates,
-                            geom=f"POINT({lng1} {lat1})",
-                            process_id = process_id
+                                airport_icao=AIRPORT_ICAO,
+                                name=row[0].strip(),
+                                coordinates_dd=coordinates,
+                                geom=f"POINT({lng1} {lat1})",
+                                process_id=process_id
+                            )
                         )
-                     )
-    
     
     for file_name in apch_coding_file_names:
         tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="all")
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         extract_insert_apch(file_name, rwy_dir, tables)
-     
     
     session.commit()
-    # print("Data insertion complete.")
-
+    print("Data insertion complete.")
 
 
 if __name__ == "__main__":

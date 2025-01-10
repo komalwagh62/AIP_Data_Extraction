@@ -134,7 +134,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number = sequence_number,
-                seq_num=int(row[0]),
+                seq_num=(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
                 course_angle=row[4]

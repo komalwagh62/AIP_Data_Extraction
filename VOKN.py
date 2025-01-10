@@ -67,23 +67,26 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     # Initialize sequence number tracker
     sequence_number = 1
     for _, row in coding_df.iterrows():
-        if not row[0].strip().isdigit():
-          continue
-        waypoint_obj = None
-        if is_valid_data(row[1]):
+         row = list(row)
+        
+         waypoint_obj = None
+         if is_valid_data(row[1]):
             waypoint_obj = (
                 session.query(Waypoint)
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[1].strip())
                 .first()
             )
-        course_angle = row[4].replace("\n", "").replace(" ", " ").replace(" )", ")").replace(" N/A", "")
-        angles = course_angle.split()
-
+            
+         
+         course_angle = row[4].replace("\n", "").replace(" ", " ").replace(" )", ")").replace(" N/A", "").replace("N/A", "")
+         angles = course_angle.split()
+ 
             # Check if we have exactly two angle values
-        if len(angles) == 2:
+         if len(angles) == 2:
             course_angle = f"{angles[0]}({angles[1]})"
+         print(course_angle)
         # Create ProcedureDescription instance
-        proc_des_obj = ProcedureDescription(
+         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             sequence_number=sequence_number,
             seq_num=int(row[0]),
@@ -99,13 +102,15 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
             process_id=process_id
         )
-        session.add(proc_des_obj)
-        if is_valid_data(data := row[2]):
+         print(proc_des_obj,"dwe")
+         session.add(proc_des_obj)
+         if is_valid_data(data := row[2]):
             if data == "Y":
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
-        sequence_number += 1
+         sequence_number += 1
+    session.commit()
 
 
 
@@ -134,9 +139,9 @@ def main():
                     header_row = df.iloc[0].tolist()
                     # print(header_row)
                     if 'Waypoint \nType \nLatitude/Longitude (WGS84) \nIdentifier \n(DD:MM:SS.SS)' in header_row:
-                        for _, row in df.iloc[1:].iterrows():
+                        for _, row in df.iterrows():
                          row = list(row)
-    
+                         print(row)
                          row = [x for x in row if x.strip()]
                          if len(row) < 3:
                             continue

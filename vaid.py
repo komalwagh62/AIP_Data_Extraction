@@ -59,7 +59,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
+            print(row)
             row = [x for x in row if x.strip()]
             if len(row) < 2:
                 continue
@@ -78,7 +78,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 )
                 for item in match
             ]
-            # print(extracted_data1)
+            print(extracted_data1)
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
@@ -109,6 +109,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     )
     session.add(procedure_obj)
     # Initialize sequence number tracker
+    path_descriptor = None
+    waypoint_obj = None
     sequence_number = 1
     for _, row in apch_data_df.iterrows():
         row = list(row)
@@ -129,9 +131,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
 
                 if len(row) >= 10:
                     vpa_tch_nav_spec_parts = row[9].strip().split()
-                    nav_spec = row[10].strip() if len(row) > 10 else None
+                    nav_spec = row[11].strip() if len(row) > 11 else None
 
                     last_part = vpa_tch_nav_spec_parts[-1]
+                    print(last_part)
                     if last_part == "APCH" and any(
                         char.isdigit() for char in vpa_tch_nav_spec_parts[0]
                     ):
@@ -202,12 +205,12 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         # print(data_parts)
                     waypoint_name = data_parts[2]
                     if is_valid_data(waypoint_name):
-                        waypoint_obj = session.execute(
-                            select(Waypoint).where(
-                                Waypoint.airport_icao == AIRPORT_ICAO,
-                                Waypoint.name == waypoint_name,
-                            )
-                        ).fetchone()[0]
+                        waypoint_obj = (
+                    session.query(Waypoint)
+                    .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
+                    .first()
+                )
+
                         print(data_parts[4])
                         course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" N/A", "")
                         angles = course_angle.split()

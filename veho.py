@@ -60,7 +60,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0, 1])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
+            print(row,"Wer")
             row = [x for x in row if x.strip()]
 
             waypoint_name1 = row[0].strip()

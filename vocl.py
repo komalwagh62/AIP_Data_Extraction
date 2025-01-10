@@ -1,9 +1,7 @@
 from model import Waypoint, Procedure, ProcedureDescription, TerminalHolding,AiracData, session
 from sqlalchemy import select
-from pyproj import Proj, transform
 
-utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
-wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
+
 
 ##################
 # EXTRACTOR CODE #
@@ -104,7 +102,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             sequence_number = sequence_number,
-            seq_num=int(row[0]),
+            seq_num=(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
             course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")"),
@@ -148,14 +146,15 @@ def main():
                     
                     df = camelot.read_pdf(
                         FOLDER_PATH + waypoint_file_name,
-                        pages="all",  # str(table_index + 1),  # Page numbers start from 1
+                        pages="all"  # str(table_index + 1),  # Page numbers start from 1
                     )[0].df
                     # print(df)
     #                 if re.search(r"WAYPOINT INFORMATION-", str(df[1]), re.I):
-                    df = df.drop(0)
+                    
                     # print(df)
-                    for _, row in df.iterrows():
+                    for _, row in df[1:].iterrows():
                         row = list(row)
+                        print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue
@@ -172,8 +171,7 @@ def main():
                        
                         lng1 = conversionDMStoDD(row[3])
                         
-                        longitude, latitude = transform(utm_proj, wgs84_proj, lat1, lng1)
-                        coordinates = f"{latitude} {longitude}"
+                        coordinates = f"{lat1} {lng1}"
                         session.add(
                             Waypoint(
                                 airport_icao=AIRPORT_ICAO,

@@ -68,7 +68,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     )
     session.add(procedure_obj)
     sequence_number = 1
-    for _, row in coding_df.iloc[1:].iterrows():
+    for _, row in coding_df.iloc[2:].iterrows():
         waypoint_obj = None
         if is_valid_data(row[2]):
             waypoint_obj = (
@@ -88,7 +88,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
-            seq_num=int(row[0]),
+            seq_num=(row[0]),
             sequence_number = sequence_number,
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
@@ -130,15 +130,15 @@ def main():
                 # if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
                     df = camelot.read_pdf(
                         FOLDER_PATH + waypoint_file_name,
-                        pages="all",  # str(table_index + 1),  # Page numbers start from 1
+                        pages="all" # str(table_index + 1),  # Page numbers start from 1
                     )[1].df
                     print(df)
                     
                     df = df.drop([0])
                         
-                    for _, row in df.iterrows():
+                    for _, row in df[1:].iterrows():
                         row = list(row)
-                        # print(row)
+                        print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue

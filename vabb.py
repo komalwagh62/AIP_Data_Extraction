@@ -62,7 +62,6 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             for _, row in waypoint_df.iterrows():
                 row = list(row)
 
-                print(row)
                 row = [x for x in row if x.strip()]
 
                 waypoint_name1 = row[0].strip()
@@ -169,7 +168,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         .first()
                     )
                     # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
-                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","")
                 angles = course_angle.split()
                 # Check if we have exactly two angle values
                 if len(angles) == 2:
@@ -205,7 +204,6 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             
              
              row = list(row)
-             print(row)
              row1 = [""]
              row2 = []
              if len(row) >= 3 and row[-3].strip():
@@ -227,7 +225,6 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         row.insert(-1, row2[-1]) 
                         row.pop(-3)
                         # row.pop(-1)
-             print(row) 
                         # row.insert(9, row1[-1]) 
                         # row.pop(-3)
                         # row.pop(-2)
@@ -250,12 +247,11 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                         
                     
                 # print(row)
-                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","")
                 angles = course_angle.split()
                 # Check if we have exactly two angle values
                 if len(angles) == 2:
                     course_angle = f"{angles[0]}({angles[1]})"
-                # print(row,"rftgh")
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     sequence_number = sequence_number,
@@ -288,7 +284,6 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 #         ):
                 #             proc_des_obj.vpa_tch = vpa_tch_nav_spec_parts[0]
                 #             proc_des_obj.nav_spec = " ".join(vpa_tch_nav_spec_parts[1:])
-                print(proc_des_obj)
                 session.add(proc_des_obj)
                 if is_valid_data(data := row[3]):
                     if data == "Y":
@@ -298,15 +293,16 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 sequence_number += 1
              else:
                 data_parts = row[0].split(" \n")
-                # print(data_parts)
-                if len(data_parts) == 13:
-                    
+                
+                if len(data_parts) >= 13:
+                    print(data_parts)
                     if data_parts[0].isdigit() or data_parts[0].endswith("Mag"):
                         # if data_parts[0].isdigit():
                         #     data_parts.insert(7, "")
                         #     data_parts.insert(3, "")
                         #     print(data_parts)
                         if data_parts[0].endswith("Mag"):
+                            print(data_parts,"d")
                             data_to_insert = data_parts[0] + " " + data_parts[-1]
                             data_parts.insert(5, data_to_insert)
                             data_parts.pop(0)
@@ -320,10 +316,14 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                             # data_parts.pop(0)
                             data_parts.insert(7, "")
                             # print(data_parts)
-                            # data_parts.pop(4)
+                            data_parts.pop(0)
+                            data_parts[6],data_parts[7] = data_parts[7],data_parts[6]
+                            data_parts[3],data_parts[4] = data_parts[4],data_parts[3]
                             # data_parts.insert(7, data_parts[4])
                             # data_parts.pop(4)
                             # data_parts.insert(3, "")
+                    print(data_parts,"rfgt")
+                    
                             
                         
                 else:
@@ -354,7 +354,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                             )
                 if len(data_parts) > 4:
                 #  print(data_parts)
-                 course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                 course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","")
                  angles = course_angle.split()
                         # Check if we have exactly two angle values
                  if len(angles) == 2:
@@ -501,7 +501,7 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                     .first()
                 )
                 # print(f"Waypoint name: {waypoint_name}, Waypoint object: {waypoint_obj}")
-            course_angle = row[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+            course_angle = row[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace("N/A", "")
             angles = course_angle.split()
 
             # Check if we have exactly two angle values
@@ -546,8 +546,8 @@ def main():
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         if len(tables) > 1:
             extract_insert_apch1(file_name, tables, rwy_dir)
-        # if len(tables) == 1:
-        #     extract_insert_apch2(file_name, rwy_dir, tables)
+        if len(tables) == 1:
+            extract_insert_apch2(file_name, rwy_dir, tables)
 
     session.commit()
     print("Data insertion complete.")

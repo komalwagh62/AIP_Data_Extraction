@@ -194,27 +194,27 @@ class AirspaceExtractor:
         self.find_and_process(tables, "2.1.4 Military Control Zones", "MTR")
 
 
-# def main():
-#     processed_urls_file = "controlled_processed_urls.txt"
-#     eaip_url = find_eaip_url()
-#     if eaip_url:
-#         base_frame_url = fetch_and_parse_frameset(eaip_url)
-#         if base_frame_url:
-#             navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
-#             if navigation_url:
-#                 enr_2_1_urls = search_and_print_controlled_links(navigation_url, processed_urls_file)
-#                 # Select a valid URL from the list
-#                 if enr_2_1_urls:
-#                     extractor = AirspaceExtractor(enr_2_1_urls[0])  # Pick first URL
-#                     extractor.extract_and_insert_2_1()
-#                 else:
-#                     print("No valid URLs found for ENR 2.1 processing.")
-
-
 def main():
-    aip_base_url = 'https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR%202.1-en-GB.html'
-    extractor = AirspaceExtractor(aip_base_url)
-    extractor.extract_and_insert_2_1()
+    processed_urls_file = "controlled_processed_urls.txt"
+    eaip_url = find_eaip_url()
+    if eaip_url:
+        base_frame_url = fetch_and_parse_frameset(eaip_url)
+        if base_frame_url:
+            navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
+            if navigation_url:
+                enr_2_1_urls = search_and_print_controlled_links(navigation_url, processed_urls_file)
+                # Select a valid URL from the list
+                if enr_2_1_urls:
+                    extractor = AirspaceExtractor(enr_2_1_urls[0])  # Pick first URL
+                    extractor.extract_and_insert_2_1()
+                else:
+                    print("No valid URLs found for ENR 2.1 processing.")
+
+
+# def main():
+#     aip_base_url = 'https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR%202.1-en-GB.html'
+#     extractor = AirspaceExtractor(aip_base_url)
+#     extractor.extract_and_insert_2_1()
 
 if __name__ == "__main__":
     main()

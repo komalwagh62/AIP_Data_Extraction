@@ -70,6 +70,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     # Initialize sequence number tracker
     sequence_number = 1
     for _, row in coding_df.iterrows():
+        row = list(row)
+        print(row)
         if not row[0].strip().isdigit():
           continue
         waypoint_obj = None
@@ -79,11 +81,12 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
+        
         course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
         angles = course_angle.split()
                         # Check if we have exactly two angle values
         if len(angles) == 2:
-            course_angle = f"{angles[0]}({angles[1]})"
+            course_angle = f"{angles[0]}{angles[1]}"
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
@@ -139,29 +142,28 @@ def main():
         process_id = get_active_process_id()
         with open(FOLDER_PATH + waypoint_file_name, "rb") as f:
             pdf = fitz.open(f)
-            if len(pdf) >= 1 and re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
-                df = camelot.read_pdf(FOLDER_PATH + waypoint_file_name, pages="all")[
+            if len(pdf) >= 1:
+                df = camelot.read_pdf(FOLDER_PATH + waypoint_file_name, pages="all", flavor="stream")[
                     1
                 ].df
-                if re.search(r"WAYPOINT INFORMATION-", str(df[1]), re.I):
-                    df = df.drop(0)
-                for _, row in df[2:].iterrows():
+                
+                # df = df.drop(0)
+                for _, row in df[4:].iterrows():
                     row = [x.strip() for x in row]
-                    # print(row)
+                    print(row)
                     if len(row) > 2:
                         waypoint_type = row[0]
                         waypoint_name = row[1]
                         waypoint_coordinates = row[2]
                         # Handle the insertion into the database here
-                        lat_dir1, lat_value1, lng_dir1, lng_value1 = re.search(
-                            r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)",
-                            waypoint_coordinates,
-                        ).groups()
-                        lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
-                        print(lat1)
-                        lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
-                        coordinates = f"{lat1} {lng1}"
-                        waypoint = Waypoint(
+                        match = re.search(r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", waypoint_coordinates)
+                        if match:
+        # Extract the groups only if a match is found
+                         lat_dir1, lat_value1, lng_dir1, lng_value1 = match.groups()
+                         lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
+                         lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+                         coordinates = f"{lat1} {lng1}"
+                         waypoint = Waypoint(
                             airport_icao=AIRPORT_ICAO,
                             type=waypoint_type,  # Set the "type" here
                             name=waypoint_name,
@@ -169,7 +171,7 @@ def main():
                             geom=f"POINT({lng1} {lat1})",
                             process_id=process_id
                         )
-                        session.add(waypoint)
+                         session.add(waypoint)
                     elif len(row) == 2:
                         waypoint_name = row[0]
                         waypoint_coordinates = row[1]

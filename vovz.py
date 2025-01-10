@@ -2,13 +2,11 @@ import camelot
 import re
 import os
 from model import AiracData, session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
-from pyproj import Proj, transform
+# from pyproj import Proj, transform
 from sqlalchemy import select
 
 
-utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
-wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
-
+# 
 AIRPORT_ICAO = "VOVZ"
 FOLDER_PATH = f"./{AIRPORT_ICAO}/"
 
@@ -77,8 +75,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 lng_value, lng_dir = lng_match.groups()
                 lat1 = conversionDMStoDD(lat_value + lat_dir)
                 lng1 = conversionDMStoDD(lng_value + lng_dir)
-                longitude, latitude = transform(utm_proj, wgs84_proj, lat1, lng1)
-                coordinates = f"{latitude} {longitude}"
+                coordinates = f"{lat1} {lng1}"
                 session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
@@ -106,9 +103,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     # Initialize sequence number tracker
     sequence_number = 1
     for _, row in apch_data_df.iterrows():
-        row = list(row)
-        if not is_valid_data(row[-1].strip()):
-            continue
+     row = list(row)
+     if row[-1] == 'RNP APCH':
+        print(row)
 
         waypoint_obj = None
         waypoint_name = row[2].strip().replace("\n", "").replace(" ", "")
@@ -149,7 +146,7 @@ def main():
                 apch_coding_file_names.append(file_name)
 
     for file_name in apch_coding_file_names:
-        tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="all")
+        tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="all", flavor="stream")
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         extract_insert_apch(file_name, rwy_dir, tables)
 

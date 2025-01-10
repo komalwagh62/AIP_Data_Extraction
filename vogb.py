@@ -1,12 +1,8 @@
 import camelot
 import re
 import os
-from pyproj import Proj, transform
 from sqlalchemy import select
 
-
-utm_proj = Proj(proj='utm', zone=43, ellps='WGS84', south=False)  # south=False for northern hemisphere
-wgs84_proj = Proj(proj='latlong', datum='WGS84')  # Latitude/Longitude
 
 from model import AiracData, session, Waypoint, Procedure, ProcedureDescription,TerminalHolding
 AIRPORT_ICAO = "VOGB"
@@ -76,8 +72,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 lng_value, lng_dir = lng_match.groups()
                 lat1 = conversionDMStoDD(lat_value + lat_dir)
                 lng1 = conversionDMStoDD(lng_value + lng_dir)
-                longitude, latitude = transform(utm_proj, wgs84_proj, lat1, lng1)
-                coordinates = f"{latitude} {longitude}"
+                coordinates = f"{lat1} {lng1}"
                 session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
@@ -95,7 +90,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     apch_data_df = coding_df.loc[:, (coding_df != "").any(axis=0)]
 
     procedure_name = (
-        re.search(r"(RNP.+)-CODING", file_name).groups()[0].replace("-", " ")
+        re.search(r"(RNP.+)-TABLE", file_name).groups()[0].replace("-", " ")
     )
     procedure_obj = Procedure(
         airport_icao=AIRPORT_ICAO,

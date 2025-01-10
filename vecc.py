@@ -64,14 +64,14 @@ def extract_insert_apch(file_name, tables, rwy_dir):
     if "IAP \nTransition \nIdentifier" in header_row:
         for _, row in coding_df.iloc[1:].iterrows():
             row = list(row)
-            # print(row[3])
+            print(row)
             if is_valid_data(row[3]):
                 waypoint_obj = (
                     session.query(Waypoint)
                     .filter_by(airport_icao=AIRPORT_ICAO, name=row[3].strip())
                     .first()
                 )
-                course_angle = row[5].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                course_angle = row[5].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","")
                 angles = course_angle.split()
                         # Check if we have exactly two angle values
                 if len(angles) == 2:
@@ -88,7 +88,8 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
                     dst_time=row[9].strip() if is_valid_data(row[9]) else None,
                     vpa_tch=row[10].strip() if is_valid_data(row[10]) else None,
-                    nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+                    role_of_the_fix = row[11].strip() if is_valid_data(row[11]) else None,
+                    nav_spec=row[12].strip() if is_valid_data(row[12]) else None,
                     iap_transition=row[1].strip() if is_valid_data(row[1]) else None,
                     process_id=process_id
                 )
@@ -104,14 +105,14 @@ def extract_insert_apch(file_name, tables, rwy_dir):
             
             for _, row in coding_df.iloc[1:].iterrows():
                 row = list(row)
-                print(row[2])
+                # print(row[2])
                 if is_valid_data(row[2]):
                     waypoint_obj = (
                         session.query(Waypoint)
                         .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                         .first()
                     )
-                    course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                    course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","")
                     angles = course_angle.split()
                         # Check if we have exactly two angle values
                     if len(angles) == 2:
@@ -212,9 +213,9 @@ def main():
                             )
 
                     else:
-                        for _, row in df.iloc[1:].iterrows():
+                        for _, row in df.iloc[3:].iterrows():
                             row = list(row)
-                            # print(row)
+                            print(row)
                             row = [x for x in row if x.strip()]
                             # print(row)
                             if len(row) < 4:
@@ -240,6 +241,7 @@ def main():
                             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
                             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
                             coordinates = f"{lat1} {lng1}"
+                            
                             session.add(
                                 Waypoint(
                                     airport_icao=AIRPORT_ICAO,

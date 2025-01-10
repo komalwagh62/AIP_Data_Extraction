@@ -53,7 +53,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     
     process_id = get_active_process_id()
     coding_df = tables[0].df
-    print(coding_df)
     coding_df = coding_df.drop(0)
     # print(coding_df)
     procedure_name = (
@@ -69,46 +68,121 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     session.add(procedure_obj)
     # Initialize sequence number tracker
     sequence_number = 1
-    for _, row in coding_df.iterrows():
-        if not row[0].strip().isdigit():
+    for _, row in coding_df[2:].iterrows():
+        row = list(row)
+        # print(row)
+        if row[-1].strip() == 'RNP APCH':
+         if not row[0].strip().isdigit():
           continue
-        waypoint_obj = None
-        if is_valid_data(row[2]):
+         waypoint_obj = None
+         if is_valid_data(row[2]):
             waypoint_obj = (
                 session.query(Waypoint)
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
-        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
-        angles = course_angle.split()
+         course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+         angles = course_angle.split()
                         # Check if we have exactly two angle values
-        if len(angles) == 2:
+         if len(angles) == 2:
             course_angle = f"{angles[0]}({angles[1]})"
         # Create ProcedureDescription instance
-        proc_des_obj = ProcedureDescription(
+         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             sequence_number=sequence_number,
-            seq_num=int(row[0]),
+            seq_num=(row[0]),
             waypoint=waypoint_obj,
-            path_descriptor=row[3].strip(),
+            path_descriptor=row[1].strip(),
             course_angle=course_angle,
-            turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
-            altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
-            speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
-            dst_time=row[8].strip() if is_valid_data(row[8]) else None,
+            turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
+            altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
+            speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
+            dst_time=row[5].strip() if is_valid_data(row[5]) else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
-            role_of_the_fix =row[10].strip() if is_valid_data(row[10]) else None,
-            nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
+            nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
             process_id=process_id
         )
-        session.add(proc_des_obj)
-        if is_valid_data(data := row[1]):
+         session.add(proc_des_obj)
+         if is_valid_data(data := row[3]):
             if data == "Y":
                 proc_des_obj.fly_over = True
             elif data == "N":
                 proc_des_obj.fly_over = False
-        sequence_number += 1
-
+         sequence_number += 1
+        else:
+            data_parts = row[0].split(" \n")
+            if len(data_parts) < 3:
+                continue
+            if data_parts[-1] == 'RNP APCH': 
+                if not data_parts[0].isdigit():
+                    data_parts.insert(4, data_parts[0])
+                    data_parts.pop(0)
+            else:
+                if data_parts[0] == '-':
+                 data_to_insert = data_parts[1] + data_parts[-1]
+                 data_parts.insert(5, data_to_insert)
+                 data_parts.pop(1)
+                 data_parts.pop(-1)
+                 data_parts.insert(4, data_parts[0])
+                 data_parts.pop(0)
+                else:
+                 data_to_insert = data_parts[0] + data_parts[-1]
+                 data_parts.insert(5, data_to_insert)
+                 data_parts.pop(0)
+                 data_parts.pop(-1)
+            print(data_parts)
+            waypoint_name = data_parts[2]
+            if is_valid_data(waypoint_name):
+                waypoint_obj = (
+                                session.query(Waypoint)
+                                .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
+                                .first()
+                )
+                print(waypoint_obj,"Dertgy")
+                        #  print(data_parts[4])
+                
+                course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                        #  print(course_angle)
+                angles = course_angle.split()
+                if len(angles) == 2:  # Ensure there are two angle values
+                    course_angle = f"{angles[0]}{angles[1]}"
+                            # print(course_angle,"wdef")
+                proc_des_obj = ProcedureDescription(
+                            procedure=procedure_obj,
+                            sequence_number=sequence_number,
+                            seq_num=data_parts[0].strip(),
+                            waypoint=waypoint_obj,
+                            path_descriptor=data_parts[1].strip(),
+                            course_angle=course_angle,
+                            turn_dir=data_parts[6].strip()
+                            if is_valid_data(data_parts[6])
+                            else None,
+                            
+                            altitude_ll=data_parts[7].strip()
+                            if is_valid_data(data_parts[7])
+                            else None,
+                            speed_limit=data_parts[8].strip()
+                            if is_valid_data(data_parts[8])
+                            else None,
+                            dst_time=data_parts[5].strip()
+                            if is_valid_data(data_parts[5])
+                            else None,
+                            vpa_tch=data_parts[9].strip()
+                            if is_valid_data(data_parts[9])
+                            else None,
+                            nav_spec=data_parts[10].strip()
+                            if is_valid_data(data_parts[10])
+                            else None,
+                            process_id=process_id
+                        )
+                session.add(proc_des_obj)
+                if is_valid_data(data := data_parts[3]):
+                    if data == "Y":
+                        proc_des_obj.fly_over = True
+                    elif data == "N":
+                        proc_des_obj.fly_over = False
+                sequence_number += 1
+            
 
 
 
@@ -132,31 +206,33 @@ def main():
                 # if re.search(r"WAYPOINT INFORMATION", pdf[0], re.I):
                     df = camelot.read_pdf(
                         FOLDER_PATH + waypoint_file_name,
-                        pages="all",  # str(table_index + 1),  # Page numbers start from 1
+                        pages="all"  # str(table_index + 1),  # Page numbers start from 1
                     )[1].df
-                    print(df)
+                    # print(df)
     #                 if re.search(r"WAYPOINT INFORMATION-", str(df[1]), re.I):
-                    df = df.drop(0)
-                    print(df)
+                    df = df.drop(index=[0, 1,2])
+                    # print(df)
                     for _, row in df.iterrows():
                         row = list(row)
-                        print(row)
+                        # print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue
-                        result_row = session.execute(
-                            select(Waypoint).where(
-                                Waypoint.airport_icao == AIRPORT_ICAO,
-                                Waypoint.name == row[1].strip(),
-                            )
-                        ).fetchone()
-                        print(result_row)
-                        if result_row:
-                            continue
+                        # result_row = session.execute(
+                        #     select(Waypoint).where(
+                        #         Waypoint.airport_icao == AIRPORT_ICAO,
+                        #         Waypoint.name == row[0].strip(),
+                        #     )
+                        # ).fetchone()
+                        # print(result_row)
+                        # if result_row:
+                        #     continue
+                        
+                        # print(row)
                         extracted_data1 = [
                             item
                             for match in re.findall(
-                                r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", row[2]
+                                r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", row[1]
                             )
                             for item in match
                         ]
@@ -167,13 +243,13 @@ def main():
                         session.add(
                             Waypoint(
                                 airport_icao=AIRPORT_ICAO,
-                                name=row[1].strip(),
-                                type=row[0].strip(),
+                                name=row[0].strip(),
+                                # type=row[0].strip(),
                                 coordinates_dd = coordinates,
                                 geom=f"POINT({lng1} {lat1})",
                                 process_id=process_id
                             )
-                        )
+                         )
     
     
     for file_name in apch_coding_file_names:

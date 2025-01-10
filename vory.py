@@ -56,35 +56,34 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
-        waypoint_df = waypoint_df.drop(index=[0, 1])
+        waypoint_df = waypoint_df.drop(index=[0])
         for _, row in waypoint_df.iterrows():
-            row = list(row)
-            # print(row)
-            row = [x for x in row if x.strip()]
+             row = list(row)
+            
+             row = [x for x in row if x.strip()]
 
-            waypoint_name1 = row[0].strip()
-            if len(row) < 2:
+             if len(row) < 2:
                 continue
-            result_row = session.execute(
+             result_row = session.execute(
                 select(Waypoint).where(
                     Waypoint.airport_icao == AIRPORT_ICAO,
                     Waypoint.name == row[0].strip(),
                 )
             ).fetchone()
-            if result_row:
+             if result_row:
                 continue
-            extracted_data1 = [
+             extracted_data1 = [
                 item
                 for match in re.findall(
                     r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", row[1]
                 )
                 for item in match
             ]
-            lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
-            lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
-            lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
-            coordinates = f"{lat1} {lng1}"
-            session.add(
+             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
+             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
+             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
+             coordinates = f"{lat1} {lng1}"
+             session.add(
                 Waypoint(
                     airport_icao=AIRPORT_ICAO,
                     name=row[0].strip(),
@@ -92,7 +91,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     geom=f"POINT({lng1} {lat1})",
                     process_id=process_id
                 )
-            )
+             )
     coding_df = tables[0].df
     coding_df = coding_df.drop(index=[0])
     apch_data_df = coding_df.loc[:, (coding_df != "").any(axis=0)]
@@ -110,8 +109,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     session.add(procedure_obj)
     # Initialize sequence number tracker
     sequence_number = 1
-    for _, row in apch_data_df.iloc[1:].iterrows():
+    for _, row in apch_data_df.iterrows():
         row = list(row)
+        print(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
          if is_valid_data(row[2]):
@@ -153,7 +153,8 @@ def main():
 
     for file_name in file_names:
         if file_name.find("CODING") > -1:
-            if file_name.find("RNP") > -1:
+            if "CODING" in file_name and "RNP" in file_name and "RNP-Z" not in file_name:  # Exclude "RNP-Z"
+                
                 apch_coding_file_names.append(file_name)
 
     for file_name in apch_coding_file_names:

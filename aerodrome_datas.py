@@ -61,7 +61,7 @@ def process_ad_data(urls):
     table2_data = []
     print_content = False
     for i, table in enumerate(tables):
-        if table.find('p', class_='Undertitle') and 'AD 2.19' in table.get_text():  # here 'p' is html tag
+        if table.find('p', class_='Undertitle') and 'AD 2.19' in table.get_text():  # here 'p' is html', tag
             print_content = True
 
         if print_content:
@@ -708,14 +708,18 @@ def process_ad_data(urls):
         
         
 def main():
-    processed_urls_file = "AD_urls.txt"
-    eaip_url = find_eaip_url()
-    if eaip_url:
-        base_frame_url = fetch_and_parse_frameset(eaip_url)
-        if base_frame_url:
-            navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
-            if navigation_url:
-                ad_urls = fetch_and_print_ad_data(navigation_url, processed_urls_file)
+    # processed_urls_file = "AD_urls.txt"
+    # eaip_url = find_eaip_url()
+    # if eaip_url:
+    #     base_frame_url = fetch_and_parse_frameset(eaip_url)
+    #     if base_frame_url:
+    #         navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
+    #         if navigation_url:
+    #             ad_urls = fetch_and_print_ad_data(navigation_url, processed_urls_file)
+                ad_urls = [
+'https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-AD 2.1VOTV-en-GB.html',
+'https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-AD 2.1VOVZ-en-GB.html',
+]
                 # Here you would process ENR 3.1 and 3.2 URLs
                 process_ad_data(ad_urls)  # Process ENR 3.1 links
                 

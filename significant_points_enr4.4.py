@@ -120,15 +120,15 @@ def process_waypoints(urls):
 
 # Main function to drive the URL extraction and processing flow
 def main():
-    # processed_urls_file = "waypoint.url.txt"
-    # eaip_url = find_eaip_url()
-    # if eaip_url:
-    #     base_frame_url = fetch_and_parse_frameset(eaip_url)
-    #     if base_frame_url:
-    #         navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
-    #         if navigation_url:
-    #             enr_4_4_urls = search_and_print_waypoint_links(navigation_url, processed_urls_file)
-                enr_4_4_urls = ["https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR%204.4-en-GB.html"]
+    processed_urls_file = "waypoint.url.txt"
+    eaip_url = find_eaip_url()
+    if eaip_url:
+        base_frame_url = fetch_and_parse_frameset(eaip_url)
+        if base_frame_url:
+            navigation_url = fetch_and_parse_navigation_frame(base_frame_url)
+            if navigation_url:
+                enr_4_4_urls = search_and_print_waypoint_links(navigation_url, processed_urls_file)
+                # enr_4_4_urls = ["https://aim-india.aai.aero/eaip-v2-07-2024/eAIP/IN-ENR%204.4-en-GB.html"]
                 process_waypoints(enr_4_4_urls)
 
 if __name__ == "__main__":

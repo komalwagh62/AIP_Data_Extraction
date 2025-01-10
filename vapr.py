@@ -123,11 +123,23 @@ def extract_insert_apch(file_name):
                 )
             ).fetchone()[0]
         course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+
         angles = course_angle.split()
                         # Check if we have exactly two angle values
         if len(angles) == 2:
-            course_angle = f"{angles[0]}({angles[1]})"
-            print(course_angle)
+            if not angles[1].startswith("(") and not angles[1].endswith(")"):
+        # Add brackets around the second angle
+                course_angle = f"{angles[0]}({angles[1]})"
+            else:
+        # If the second angle already has brackets, keep it as is
+                course_angle = f"{angles[0]}{angles[1]}"
+        
+    # Handle cases where there are not exactly two angles
+        elif len(angles) == 1:  # Handle cases where the string might not split properly
+    # Look for patterns like "178.24°177.99°" and add brackets around the second angle
+            course_angle = re.sub(r"(\d+\.\d+°)(\d+\.\d+°)", r"\1(\2)", course_angle)
+
+        print(course_angle,"jn")
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
             sequence_number=sequence_number,

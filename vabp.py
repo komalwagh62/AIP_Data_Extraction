@@ -70,7 +70,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     sequence_number = 1
     for _, row in coding_df.iloc[1:].iterrows():
         row = list(row)
-       
         if bool(row[-1].strip()):
          waypoint_obj = None
          if is_valid_data(row[2]):
@@ -80,11 +79,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 .first()
             )
          course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace(" / "," ")
-         print(course_angle,"frgthy")             #  print(course_angle)
          angles = course_angle.split()
          if len(angles) == 2:  # Ensure there are two angle values
                             course_angle = f"{angles[0]}({angles[1]})"
-                            print(course_angle,"dwc")
 
 
          # Create ProcedureDescription instance
@@ -150,21 +147,26 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     continue  # Skip invalid rows
 
                     # Print the final processed parts for debugging
-            print(data_parts)
-            waypoint_name = data_parts[2]
+            waypoint_name = data_parts[2].replace(" ","")
             if is_valid_data(waypoint_name):
-                    waypoint_obj = (
-                        session.query(Waypoint)
-                        .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
-                        .first()
-                    )
+                print(waypoint_name,"de")
+                print(f"AIRPORT_ICAO: '{AIRPORT_ICAO}', waypoint_name: '{waypoint_name}'")
+
+                waypoint_obj = (
+                                session.query(Waypoint)
+                                .filter_by(
+                                    airport_icao=AIRPORT_ICAO,
+                                    name=waypoint_name,
+                                )
+                                .first()
+                            )
+                print(waypoint_obj,"Dr")
+                    
             course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace(" / "," ")
-            print(course_angle)
             angles = course_angle.split()
             if len(angles) == 2:  # Ensure there are two angle values
                 course_angle = f"{angles[0]}({angles[1]})"
-                print(course_angle)
-                
+            print(waypoint_obj)
             proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     sequence_number=sequence_number,
@@ -200,7 +202,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                 elif data == "N":
                     proc_des_obj.fly_over = False
             sequence_number += 1
-    session.commit()
+        session.commit()
 
 
                 
@@ -237,7 +239,6 @@ def main():
                         
                     for _, row in df.iterrows():
                         row = list(row)
-                        # print(row)
                         row = [x for x in row if x.strip()]
                         if len(row) < 2:
                             continue
@@ -269,7 +270,7 @@ def main():
                                 process_id=process_id
                             )
                         )
-    session.commit()
+    # session.commit()
     for file_name in apch_coding_file_names:
         tables = camelot.read_pdf(FOLDER_PATH + file_name, pages="all")
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]

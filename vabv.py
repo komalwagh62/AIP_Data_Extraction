@@ -126,7 +126,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
     for _, row in apch_data_df.iloc[1:].iterrows():
         
         row = list(row)
-        # print(row)
+        print(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
             if is_valid_data(row[3]):
@@ -197,13 +197,20 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
+                course_angle = data_parts[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                angles = course_angle.split()
+
+                # Check if we have exactly two angle values
+                if len(angles) == 2:
+                    course_angle = f"{angles[0]}({angles[1]})"
+                    print(course_angle)
                 proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     sequence_number=sequence_number,
                     seq_num=data_parts[0].strip(),
                     waypoint=waypoint_obj,
                     path_descriptor=data_parts[1].strip(),
-                    course_angle=data_parts[4].strip(),
+                    course_angle=course_angle,
                     turn_dir=data_parts[6].strip()
                     if is_valid_data(data_parts[6])
                     else None,

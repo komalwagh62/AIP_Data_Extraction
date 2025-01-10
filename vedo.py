@@ -108,6 +108,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     sequence_number = 1
     for _, row in apch_data_df.iterrows():
         row = list(row)
+        # print(row)
         altitude_ll = None
         speed_limit = None
 
@@ -155,7 +156,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
 
         else:
             data_parts = row[0].split(" \n")
-
+            
             # print(data_parts)
             if len(data_parts) >= 10:
                 data_parts.insert(-1, data_parts[0])
@@ -191,61 +192,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     data_parts.insert(2, data_parts[-1])
                     data_parts.pop(-1)
 
-                    alt_speed_data = data_parts[7].strip()
-                    if alt_speed_data:
-                        alt_speed_values = alt_speed_data.split()
-                        if len(alt_speed_values) == 2:
-                            altitude_ll, speed_limit = alt_speed_values
-
-                    # print(data_parts)
-                    if len(data_parts) >10:
-
-                     waypoint_name = data_parts[2]
-                     if is_valid_data(waypoint_name):
-                        waypoint_obj = (
-                            session.query(Waypoint)
-                            .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
-                            .first()
-                        )
-                     course_angle = row[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
-                     angles = course_angle.split()
-
-            # Check if we have exactly two angle values
-                     if len(angles) == 2:
-                        course_angle = f"{angles[0]}({angles[1]})"
-                     proc_des_obj = ProcedureDescription(
-                        procedure=procedure_obj,
-                        seq_num=data_parts[0].strip(),
-                        sequence_number = sequence_number,
-                        waypoint=waypoint_obj,
-                        path_descriptor=data_parts[1].strip(),
-                        course_angle=course_angle,
-                        turn_dir=data_parts[6].strip()
-                        if is_valid_data(data_parts[6])
-                        else None,
-                        altitude_ll=altitude_ll,
-                        speed_limit=speed_limit,
-                        dst_time=data_parts[5].strip()
-                        if is_valid_data(data_parts[5])
-                        else None,
-                        vpa_tch=data_parts[9].strip()
-                        if is_valid_data(data_parts[9])
-                        else None,
-                        nav_spec=data_parts[10].strip()
-                        if is_valid_data(data_parts[10])
-                        else None,
-                        process_id=process_id
-                     )
-                     session.add(proc_des_obj)
-                     if is_valid_data(data := row[3]):
-                        if data == "Y":
-                            proc_des_obj.fly_over = True
-                        elif data == "N":
-                            proc_des_obj.fly_over = False
-                     # Initialize sequence number tracker
-                     sequence_number += 1
+                    
                             
                 if len(data_parts) >10:
+                #  print(data_parts)
 
                  waypoint_name = data_parts[2]
                  if is_valid_data(waypoint_name):
@@ -254,12 +204,15 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-                 course_angle = row[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                 course_angle = data_parts[4].replace("\n", "").replace("   ", " ").replace(" )", ")").replace(" N/A", "")
                  angles = course_angle.split()
 
                     # Check if we have exactly two angle values
                  if len(angles) == 2:
                   course_angle = f"{angles[0]}({angles[1]})"
+                 course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', course_angle)
+
+                 print(course_angle)
                  proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     sequence_number = sequence_number,
@@ -294,6 +247,61 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     elif data == "N":
                         proc_des_obj.fly_over = False
                  sequence_number += 1
+                else:
+                    alt_speed_data = data_parts[7].strip()
+                    if alt_speed_data:
+                        alt_speed_values = alt_speed_data.split()
+                        if len(alt_speed_values) == 2:
+                            altitude_ll, speed_limit = alt_speed_values
+                    
+                    
+
+                    waypoint_name = data_parts[2]
+                    if is_valid_data(waypoint_name):
+                            waypoint_obj = (
+                            session.query(Waypoint)
+                            .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
+                            .first()
+                        )
+                        
+                    course_angle = data_parts[4].replace("\n", "").replace("  ", " ").replace(" )", ")").replace(" N/A", "")
+                    angles = course_angle.split()
+
+            # Check if we have exactly two angle values
+                    if len(angles) == 2:
+                            course_angle = f"{angles[0]}({angles[1]})"
+                    proc_des_obj = ProcedureDescription(
+                        procedure=procedure_obj,
+                        seq_num=data_parts[0].strip(),
+                        sequence_number = sequence_number,
+                        waypoint=waypoint_obj,
+                        path_descriptor=data_parts[1].strip(),
+                        course_angle=course_angle,
+                        turn_dir=data_parts[6].strip()
+                        if is_valid_data(data_parts[6])
+                        else None,
+                        altitude_ll=altitude_ll,
+                        speed_limit=speed_limit,
+                        dst_time=data_parts[5].strip()
+                        if is_valid_data(data_parts[5])
+                        else None,
+                        vpa_tch=data_parts[8].strip()
+                        if is_valid_data(data_parts[8])
+                        else None,
+                        nav_spec=data_parts[9].strip()
+                        if is_valid_data(data_parts[9])
+                        else None,
+                        process_id=process_id
+                     )
+                    session.add(proc_des_obj)
+                    if is_valid_data(data := row[3]):
+                        if data == "Y":
+                            proc_des_obj.fly_over = True
+                        elif data == "N":
+                            proc_des_obj.fly_over = False
+                     # Initialize sequence number tracker
+                    sequence_number += 1
+                            
 
 
 def main():
@@ -302,7 +310,7 @@ def main():
 
     for file_name in file_names:
         if file_name.find("CODING") > -1:
-            if file_name.find("RNP") > -1:
+            if file_name.find("RNP-Y") > -1:
                 apch_coding_file_names.append(file_name)
 
     for file_name in apch_coding_file_names:

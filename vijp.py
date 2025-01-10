@@ -156,7 +156,6 @@ def extract_insert_sid(type_):
                         # Check if we have exactly two angle values
                 if len(angles) == 2:
                     course_angle = f"{angles[0]}({angles[1]})"
-                print(row[0])
                 proc_des_obj = ProcedureDescription(
                     procedure=prev_procedure_obj,  # Use the previous procedure object
                     sequence_number = sequence_number,
@@ -208,6 +207,7 @@ def extract_insert_star(type_):
             if procedure_name_match:  # Assuming procedure names are in the first column
                 procedure_name_str = row[0].replace("&", ",")
                 procedure_names = re.split(r"\s*,\s*", procedure_name_str)
+                print(procedure_names,"ef")
                 procedure_names = [
                     name.strip() for name in procedure_names if name.strip()
                 ]
@@ -215,8 +215,10 @@ def extract_insert_star(type_):
                 continue  # Move to the next row after extracting procedure names
             if row[2] == "IF":
                 procedure_name = procedure_names[i]
-                procedure_name = procedure_name.strip()
-                i += 1
+                print(procedure_name)
+                # procedure_name1 = procedure_name.strip()
+                # print(procedure_name,"rf")
+                
                 procedure_obj = Procedure(
                     airport_icao=AIRPORT_ICAO,
                     rwy_dir=rwy_dir,
@@ -225,6 +227,7 @@ def extract_insert_star(type_):
                     process_id=process_id
                 )
                 session.add(procedure_obj)
+                i += 1
                 prev_procedure_obj = procedure_obj
                 seq_num = 1
                 procedure_obj.name, procedure_obj.designator = procedure_name.split()
@@ -459,7 +462,6 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
             row = [x for x in row if x.strip()]
             if len(row) > 2:  # length of the row list is less than 2.
                 continue
-            print(row)
             waypoint_name1 = row[0].strip()
             extracted_data1 = [
                 item
@@ -468,7 +470,6 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
                 )
                 for item in match
             ]
-            print(extracted_data1)
             lat_dir1, lat_value1, lng_dir1, lng_value1 = extracted_data1
             lat1 = conversionDMStoDD(lat_value1 + lat_dir1)
             lng1 = conversionDMStoDD(lng_value1 + lng_dir1)
@@ -511,7 +512,6 @@ def extract_insert_apch2(file_name, rwy_dir, tables):
     sequence_number = 1
     for _, row in coding_df.iterrows():
         row = list(row)
-        print(row)
         waypoint_obj = None
         if is_valid_data(row[2]):
             waypoint_obj = (

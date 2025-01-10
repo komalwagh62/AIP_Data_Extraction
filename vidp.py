@@ -118,7 +118,8 @@ def process_sid_procedures(df, procedure_type):
             # print(f"Waypoint found: {waypoint_obj}", "hb")
             # Ensure `row[4]` is a string before calling replace
             if isinstance(row[4], str):
-                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "")
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "").replace("N/A","")
+                course_angle = course_angle.replace('\n', ' ').strip()
             else:
             # Convert non-string types to a string, or handle the case appropriately
                 course_angle = str(row[4])
@@ -128,6 +129,7 @@ def process_sid_procedures(df, procedure_type):
             # Check if we have exactly two angle values
             if len(angles) == 2:
                 course_angle = f"{angles[0]}({angles[1]})"
+            
                 # print(course_angle)
 
             proc_des_obj = ProcedureDescription(
@@ -222,7 +224,7 @@ def process_star_procedures(df, procedure_type):
             # Ensure `row[4]` is a string before calling replace
             
             if isinstance(row[4], str):
-                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "")
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "").replace("N/A","")
                 course_angle = course_angle.replace('\n', ' ').strip()
 
             else:
@@ -266,9 +268,11 @@ def process_apch_procedures(df, procedure_type):
     process_id = get_active_process_id()
     procedure_obj = None
     course_angle = None
+    
     for _, row in df.iterrows():
         waypoint_obj = None
         row = list(row)
+     
         if pd.isna(row).all():
             continue
         if pd.isna(row[-1]):
@@ -300,6 +304,7 @@ def process_apch_procedures(df, procedure_type):
         # Initialize sequence number tracker
             sequence_number = 1
         if row[-3] == "RNP APCH":
+            print(row)
             if not pd.isna(row[2]):
                 print(row[2])
                 # print(row[2])
@@ -310,7 +315,8 @@ def process_apch_procedures(df, procedure_type):
                 )
             # Ensure `row[4]` is a string before calling replace
             if isinstance(row[4], str):
-                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "")
+                course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("True", "").replace("/", "").replace("N/A","")
+                course_angle = course_angle.replace('\n', ' ').strip()
             else:
                 # Convert non-string types to a string, or handle the case appropriately
                 course_angle = str(row[4])
@@ -321,12 +327,12 @@ def process_apch_procedures(df, procedure_type):
             if len(angles) == 2:
                 course_angle = f"{angles[0]}({angles[1]})"
                 # print(course_angle)
-        proc_des_obj = ProcedureDescription(
+            proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number = sequence_number,
-                seq_num=int(row[0]),
+                seq_num=(row[0]),
                 waypoint=waypoint_obj,
-                path_descriptor=row[1].strip(),
+                path_descriptor=row[1].strip() if is_valid_data(row[1]) else None,
                 course_angle=course_angle if is_valid_data(course_angle) else None,
                 turn_dir=row[6] if is_valid_data(row[6]) else None,
                 altitude_ul=str(row[7]) if is_valid_data(row[7]) else None,
@@ -337,20 +343,22 @@ def process_apch_procedures(df, procedure_type):
                 nav_spec=row[11] if is_valid_data(row[11]) else None,
                 process_id=process_id
             )
-        session.add(proc_des_obj)
+            session.add(proc_des_obj)
 
-        if is_valid_data(data := row[3]):
+            if is_valid_data(data := row[3]):
                 if data == "Y":
                     proc_des_obj.fly_over = True
                 elif data == "N":
                     proc_des_obj.fly_over = False
-        sequence_number += 1
+            sequence_number += 1
     # session.commit()
 
 
 
 def main():
-    df_wpt = pd.read_excel(EXCEL_FILE, sheet_name="WPT")
+    df_wpt = pd.read_excel(EXCEL_FILE, sheet_name="WPT", engine="openpyxl")
+
+
     process_id = get_active_process_id()
     for _, row in df_wpt.iterrows():
         waypoint_name = row["Waypoint"]
@@ -383,40 +391,40 @@ def main():
         )
     # session.commit()
         
-    # df_hldg = pd.read_excel(EXCEL_FILE, sheet_name="HLDG")
-    # for _, row in df_hldg.iterrows():
-    #     row = list(row)
-    #     # print(row)
-    #     waypoint_obj = None
-    #     waypoint_obj = (
-    #         session.query(Waypoint)
-    #         .filter_by(airport_icao=AIRPORT_ICAO, name=(row[1]).strip())
-    #         .first()
-    #     )
-    #     course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("/", "")
-    #     angles = course_angle.split()
-    #     # Check if we have exactly two angle values
-    #     if len(angles) == 2:
-    #         course_angle = f"{angles[0]}({angles[1]})"
-    #     term_hold_obj = TerminalHolding(
-    #         waypoint_id=waypoint_obj.id,
-    #         path_descriptor=row[0].strip(),
-    #         course_angle=course_angle,
-    #         turn_dir=row[5] if is_valid_data(row[5]) else None,
-    #         altitude_ul=str(row[6]) if is_valid_data(row[6]) else None,
-    #         altitude_ll=str(row[7]) if is_valid_data(row[7]) else None,
-    #         speed_limit=row[8] if is_valid_data(row[8]) else None,
-    #         dst_time=row[4] if is_valid_data(row[4]) else None,
-    #         vpa_tch=row[9] if is_valid_data(row[9]) else None,
-    #         nav_spec=row[10] if is_valid_data(row[10]) else None,
-    #         # process_id = process_id
-    #     )
-    #     session.add(term_hold_obj)
-    #     if is_valid_data(data := row[2]):
-    #         if data == "Y":
-    #             term_hold_obj.fly_over = True
-    #         elif data == "N":
-    #             term_hold_obj.fly_over = False
+    df_hldg = pd.read_excel(EXCEL_FILE, sheet_name="HLDG")
+    for _, row in df_hldg.iterrows():
+        row = list(row)
+        # print(row)
+        waypoint_obj = None
+        waypoint_obj = (
+            session.query(Waypoint)
+            .filter_by(airport_icao=AIRPORT_ICAO, name=(row[1]).strip())
+            .first()
+        )
+        course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("/", "")
+        angles = course_angle.split()
+        # Check if we have exactly two angle values
+        if len(angles) == 2:
+            course_angle = f"{angles[0]}({angles[1]})"
+        term_hold_obj = TerminalHolding(
+            waypoint_id=waypoint_obj.id,
+            path_descriptor=row[0].strip(),
+            course_angle=course_angle,
+            turn_dir=row[5] if is_valid_data(row[5]) else None,
+            altitude_ul=str(row[6]) if is_valid_data(row[6]) else None,
+            altitude_ll=str(row[7]) if is_valid_data(row[7]) else None,
+            speed_limit=row[8] if is_valid_data(row[8]) else None,
+            dst_time=row[4] if is_valid_data(row[4]) else None,
+            vpa_tch=row[9] if is_valid_data(row[9]) else None,
+            nav_spec=row[10] if is_valid_data(row[10]) else None,
+            # process_id = process_id
+        )
+        session.add(term_hold_obj)
+        if is_valid_data(data := row[2]):
+            if data == "Y":
+                term_hold_obj.fly_over = True
+            elif data == "N":
+                term_hold_obj.fly_over = False
 
     df_sid = pd.read_excel(EXCEL_FILE, sheet_name="SID")
     process_sid_procedures(df_sid, "SID")
@@ -424,8 +432,8 @@ def main():
     df_star = pd.read_excel(EXCEL_FILE, sheet_name="STAR")
     process_star_procedures(df_star, "STAR")
     
-    # df_apch = pd.read_excel(EXCEL_FILE, sheet_name="APCH")
-    # process_apch_procedures(df_apch, "APCH")
+    df_apch = pd.read_excel(EXCEL_FILE, sheet_name="APCH")
+    process_apch_procedures(df_apch, "APCH")
 
     session.commit()
     

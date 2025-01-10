@@ -243,7 +243,7 @@ class nonConvLineData(Base):
 # Airport Data Extract from Aerodromes AD
 class AirportData(Base):
     __tablename__ = 'airportdata'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     ICAOCode = Column(String(10), nullable=False)
     airport_name = Column(String(500), nullable=False)
     coordinate = Column(String(500), nullable=False)
@@ -254,7 +254,7 @@ class AirportData(Base):
     magnetic_variation = Column(String(500), nullable=False)
     city = Column(String(500), nullable=False)
     IATACode = Column(String(500), nullable=False)
-    process_id = Column(VARCHAR(500), nullable=False) 
+    # process_id = Column(VARCHAR(500), nullable=False) 
     
 # Runway data from AD
 class RunwayCharacterstics(Base):

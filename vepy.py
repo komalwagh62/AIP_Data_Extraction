@@ -278,7 +278,7 @@ def main():
         if len(tables) == 1:
             extract_insert_apch(file_name, tables, rwy_dir)
     
-    session.commit()
+    # session.commit()
     print("Data insertion complete.")
 
 

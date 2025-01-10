@@ -184,7 +184,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
-            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")")
+            course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")").replace(" ","")
             print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
@@ -192,10 +192,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                 seq_num=int(row[0]),
                 waypoint=waypoint_obj,
                 path_descriptor=row[1].strip(),
-                course_angle=row[4]
-                .replace("\n", "")
-                .replace("  ", "")
-                .replace(" )", ")"),
+                course_angle=course_angle,
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
                 altitude_ul=row[7].strip() if is_valid_data(row[7]) else None,
                 altitude_ll=row[8].strip() if is_valid_data(row[8]) else None,
@@ -253,7 +250,7 @@ def extract_insert_apch(file_name, tables, rwy_dir):
                             seq_num=data_parts[0].strip(),
                             waypoint=waypoint_obj,
                             path_descriptor=data_parts[1].strip(),
-                            course_angle=data_parts[4].strip(),
+                            course_angle=course_angle,
                             turn_dir=data_parts[6].strip()
                             if is_valid_data(data_parts[6])
                             else None,
@@ -298,16 +295,17 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
         # print("Waypoint Table:", waypoint_df)  # Add this line to print the waypoint_df
         if re.search(r"Waypoint", waypoint_df[0][0], re.I):
             waypoint_df = waypoint_df.drop(0)
-        for _, row in waypoint_df.iterrows():
+        for _, row in waypoint_df[5:].iterrows():
             row = list(row)
+            print(row)
             row = [x for x in row if x.strip()]
             if len(row) < 2:  # length of the row list is less than 2.
                 continue
-            waypoint_name1 = row[0].strip()
+            waypoint_name1 = row[1].strip()
             extracted_data1 = [
                 item
                 for match in re.findall(
-                    r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", row[1]
+                    r"([NS])\s*([\d:.]+)\s*([EW])\s*([\d:.]+)", row[2]
                 )
                 for item in match
             ]
@@ -365,7 +363,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
                 .filter_by(airport_icao=AIRPORT_ICAO, name=row[2].strip())
                 .first()
             )
-        course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")")
+        course_angle=row[4].replace("\n", "").replace(" ", "").replace(" )", ")").replace(" ","")
         print(course_angle)
         # Create ProcedureDescription instance
         proc_des_obj = ProcedureDescription(
@@ -374,7 +372,7 @@ def extract_insert_apch1(file_name, tables, rwy_dir):
             seq_num=int(row[0]),
             waypoint=waypoint_obj,
             path_descriptor=row[3].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ul =row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
@@ -400,7 +398,7 @@ def main():
     apch_coding_file_names = []
     for file_name in file_names:
         if file_name.find("CODING") > -1:
-            if file_name.find("RNP") > -1:
+            if file_name.find("RNP-Y") > -1:
                 apch_coding_file_names.append(file_name)
 
     for file_name in apch_coding_file_names:

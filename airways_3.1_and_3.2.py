@@ -243,8 +243,7 @@ def process_lines(urls):
                                 radial_distance = first_p_text.strip()  # In case radial distance is in the first <p> tag
                             else:
                              radial_distance = None
-                        else:
-                         print("Insufficient <p> tags to extract data.")
+                        
                         limit_text = cells[3].find_all('p')
                         if len(limit_text) >= 2:
                             upper_limit = limit_text[0].get_text(strip=True)
@@ -566,12 +565,12 @@ def main():
                 enr_3_1_urls, enr_3_2_urls = search_and_print_enr_links(navigation_url, processed_urls_file)
     
                 # Here you would process ENR 3.1 and 3.2 URLs
-                process_routes(enr_3_1_urls,"Conv")  # Process ENR 3.1 links
-                process_routes(enr_3_2_urls,"Non Conv")  # Process ENR 3.2 links
+                # process_routes(enr_3_1_urls,"Conv")  # Process ENR 3.1 links
+                # process_routes(enr_3_2_urls,"Non Conv")  # Process ENR 3.2 links
                 # process_lines(enr_3_1_urls)
                 # process_lines(enr_3_2_urls)
                 # process_convline(enr_3_1_urls)
-                # process_nonconv(enr_3_2_urls)
+                process_nonconv(enr_3_2_urls)
 
         
 if __name__ == "__main__":

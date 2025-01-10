@@ -59,7 +59,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
+            # print(row,"hb")
             row = [x for x in row if x.strip()]
 
             waypoint_name1 = row[0].strip()
@@ -123,17 +123,21 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                     .first()
                 )
-            
+            course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","").replace("/","")
+            # print(course_angle)
+            angles = course_angle.split()
+            if len(angles) == 2:  # Ensure there are two angle values
+                            course_angle = f"{angles[0]}({angles[1]})"
+            course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', course_angle)
+
+            print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number = sequence_number,
                 seq_num=row[0],
                 waypoint=waypoint_obj,
                 path_descriptor=row[3].strip(),
-                course_angle=row[4]
-                .replace("\n", "")
-                .replace(" ", "")
-                .replace(" )", ")"),
+                course_angle=course_angle.replace(" ",""),
                 turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
            
                 altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
@@ -172,14 +176,21 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         .filter_by(airport_icao=AIRPORT_ICAO, name=waypoint_name)
                         .first()
                     )
-             course_angle = data_parts[4].strip().replace("\n", "").replace(" ", "")
+             course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "").replace("N/A","").replace("/","")
+                        #  print(course_angle)
+             angles = course_angle.split()
+             if len(angles) == 2:  # Ensure there are two angle values
+                            course_angle = f"{angles[0]}({angles[1]})"
+            #  course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', course_angle)
+
+             print(course_angle)
              proc_des_obj = ProcedureDescription(
                     procedure=procedure_obj,
                     sequence_number=sequence_number,
                     seq_num=data_parts[0].strip(),
                     waypoint=waypoint_obj,
                     path_descriptor=data_parts[3].strip(),
-                    course_angle=course_angle,
+                    course_angle=course_angle.replace(" ",""),
                     turn_dir=data_parts[6].strip()
                     if is_valid_data(data_parts[6])
                     else None,

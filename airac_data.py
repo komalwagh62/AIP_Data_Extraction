@@ -2,7 +2,7 @@ from model import AiracData, session
 from sqlalchemy.exc import IntegrityError
 import requests
 from bs4 import BeautifulSoup
-from shapely import wkt
+# from shapely import wkt
 import os
 import re
 import uuid

@@ -59,7 +59,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0, 1])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
             row = [x for x in row if x.strip()]
 
             waypoint_name1 = row[0].strip()
@@ -114,6 +113,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     sequence_number = 1
     for _, row in apch_data_df.iloc[1:].iterrows():
         row = list(row)
+        print(row)
         waypoint_obj = None
         if bool(row[-1].strip()):
             if is_valid_data(row[2]):
@@ -128,7 +128,6 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                         # Check if we have exactly two angle values
             if len(angles) == 2:
                 course_angle = f"{angles[0]}({angles[1]})"
-                print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number=sequence_number,

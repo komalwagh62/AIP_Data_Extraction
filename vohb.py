@@ -58,7 +58,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0])
         for _, row in waypoint_df.iterrows():
             row = list(row)
-            # print(row)
+            print(row)
             row = [x for x in row if x.strip()]
             if len(row) < 2:
                 continue
@@ -107,6 +107,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     session.add(procedure_obj)
     # Initialize sequence number tracker
     sequence_number = 1
+    waypoint_obj =None
     header_row = coding_df.iloc[0].tolist()
     start_index = 3 if len(header_row) >= 12 else 1
     for _, row in coding_df.iloc[start_index:].iterrows():
@@ -137,7 +138,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             seq_num=row[0],
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
-            course_angle=row[4].replace("\n", "").replace("  ", "").replace(" )", ")"),
+            course_angle=course_angle,
             turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
             altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
             speed_limit=row[8].strip() if is_valid_data(row[8]) else None,

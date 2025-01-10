@@ -59,6 +59,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
         waypoint_df = waypoint_df.drop(index=[0, 1])
         for _, row in waypoint_df.iterrows():
             row = list(row)
+            print(row)
             row = [x for x in row if x.strip()]
 
             waypoint_name1 = row[0].strip()
@@ -181,7 +182,7 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                                 Waypoint.name == waypoint_name,
                             )
                         ).fetchone()[0]
-                        course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                        course_angle = data_parts[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
                         angles = course_angle.split()
                         # Check if we have exactly two angle values
                         if len(angles) == 2:
@@ -316,7 +317,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                                     )
                                     .first()
                                 )
-                            course_angle = row[3].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+                            
+                            course_angle = data_parts[3].replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
                             angles = course_angle.split()
                         # Check if we have exactly two angle values
                             if len(angles) == 2:

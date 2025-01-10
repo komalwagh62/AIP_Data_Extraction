@@ -57,9 +57,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
-        waypoint_df = waypoint_df.drop(index=[0, 1,2])
+        waypoint_df = waypoint_df.drop(index=[0,1,2])
         for _, row in waypoint_df.iterrows():
            row = list(row)
+           print(row)
            row = [x for x in row if x.strip()]
            waypoint_name1 = row[0].strip()
            if len(row) < 2:
@@ -96,9 +97,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     session.add(procedure_obj)
     # Initialize sequence number tracker
     sequence_number = 1
-    for _, row in apch_data_df.iterrows():
+    for _, row in apch_data_df[2:].iterrows():
         row = list(row)
-        # print(row)
+        print(row)
 
         waypoint_obj = None
         if bool(row[-1].strip()):
@@ -111,11 +112,17 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     .first()
                 )
             course_angle = row[4].replace("\n", "").replace("  ", "").replace(" )", ")").replace(" Mag", "").replace(" True", "")
+
             angles = course_angle.split()
                         # Check if we have exactly two angle values
             if len(angles) == 2:
-                course_angle = f"{angles[0]}({angles[1]})"
-                print(course_angle)
+                if not re.match(r"\(.*\)", angles[1]):
+                 course_angle = f"{angles[0]}({angles[1]})"
+            else:
+    # Handle other cases (optional) if needed
+                pass
+
+            print(course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number=sequence_number,
