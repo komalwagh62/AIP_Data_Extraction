@@ -63,9 +63,11 @@ def extract_insert_apch(file_name, rwy_dir, tables):
     waypoint_tables = tables[1:]
     for waypoint_table in waypoint_tables:
         waypoint_df = waypoint_table.df
-        waypoint_df = waypoint_df.drop(index=[0, 1,2])
-        for _, row in waypoint_df.iterrows():
+        # waypoint_df = waypoint_df.drop(index=[0, 1,2])
+        for _, row in waypoint_df.iloc[3:].iterrows():
+            
             row = list(row)
+            # print(row)
             if len(row) < 3:
             #  print(row)
              row = [x for x in row if x.strip()]
@@ -94,7 +96,9 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                     process_id=process_id
                 )
              )
-            else:
+        for _, row in waypoint_df.iloc[2:].iterrows():
+            row = list(row)
+            if len(row) > 3:
                 row = [x for x in row if x.strip()]
                 # print(row)
     
@@ -187,10 +191,10 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             waypoint=waypoint_obj,
             path_descriptor=row[1].strip(),
             course_angle=course_angle,
-            turn_dir=row[6].strip() if is_valid_data(row[6]) else None,
-            altitude_ll=row[7].strip() if is_valid_data(row[7]) else None,
-            speed_limit=row[8].strip() if is_valid_data(row[8]) else None,
-            dst_time=row[5].strip() if is_valid_data(row[5]) else None,
+            turn_dir=row[6].strip() if is_valid_data(row[6]) and row[6] != "N/A" else None,
+            altitude_ll=row[7].strip() if is_valid_data(row[7]) and row[7] != "N/A" else None,
+            speed_limit=row[8].strip().replace("-", "") if is_valid_data(row[8]) and row[8] != "N/A" else None,
+            dst_time=row[5].strip().replace("-", "") if is_valid_data(row[5]) and row[5] != "N/A" else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
             # role_of_the_fix=row[10].strip() if is_valid_data(row[10]) else None,
             nav_spec=row[10].strip() if is_valid_data(row[10]) else None,
@@ -271,11 +275,11 @@ def extract_insert_apch(file_name, rwy_dir, tables):
                             altitude_ll=data_parts[7].strip()
                             if is_valid_data(data_parts[7])
                             else None,
-                            speed_limit=data_parts[8].strip()
-                            if is_valid_data(data_parts[8])
+                            speed_limit=data_parts[8].strip().replace("-", "")
+                            if is_valid_data(data_parts[8]) and data_parts[8] != "N/A"
                             else None,
-                            dst_time=data_parts[5].strip()
-                            if is_valid_data(data_parts[5])
+                            dst_time=data_parts[5].strip().replace("-", "")
+                            if is_valid_data(data_parts[5]) and data_parts[5] != "N/A"
                             else None,
                             vpa_tch=data_parts[9].strip()
                             if is_valid_data(data_parts[9])
@@ -331,8 +335,8 @@ def extract_insert_apch(file_name, rwy_dir, tables):
             course_angle=course_angle,
             turn_dir=row[5].strip() if is_valid_data(row[5]) else None,
             altitude_ll=row[6].strip() if is_valid_data(row[6]) else None,
-            speed_limit=row[7].strip() if is_valid_data(row[7]) else None,
-            dst_time=row[8].strip() if is_valid_data(row[8]) else None,
+            speed_limit=row[7].strip().replace("-", "") if is_valid_data(row[7]) and row[7] != "N/A" else None,
+            dst_time=row[8].strip().replace("-", "") if is_valid_data(row[8]) and row[8] != "N/A"else None,
             vpa_tch=row[9].strip() if is_valid_data(row[9]) else None,
             role_of_the_fix=row[10].strip() if is_valid_data(row[10]) else None,
             nav_spec=row[11].strip() if is_valid_data(row[11]) else None,
