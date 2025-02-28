@@ -238,7 +238,7 @@ def main():
         rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
         extract_insert_apch(file_name, rwy_dir, tables)
 
-    # session.commit()
+    session.commit()
 
     print("Data insertion complete.")
 

@@ -3,5 +3,6 @@
         "editor.defaultFormatter": "mikoz.black-py"
     },
     "python.formatting.provider": "none",
-    "files.autoSave": "afterDelay"
+    "files.autoSave": "afterDelay",
+    "python.defaultInterpreterPath": "C:\\Users\\DELL\\AppData\\Local\\Programs\\Python\\Python311\\python.exe"
 }
