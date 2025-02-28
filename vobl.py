@@ -87,16 +87,15 @@ def extract_insert_sid_star(file_name, type_):
     process_id = get_active_process_id()
     rwy_dir = re.search(r"RWY-(\d+[A-Z]?)", file_name).groups()[0]
     file_path = FOLDER_PATH + file_name
-    # print(f"Extracting from: {file_path}")
+    print(f"Extracting from: {file_path}")
     procedure_names = None
     with open(file_path, "rb") as f:
         # To get procedure names
         texts = pdftotext.PDF(f)
         procedure_names = re.findall(r"([A-Z]+\s+[A-Z0-9]+)\s*Waypoint", texts[0])
-    # tables = camelot.read_pdf(
-    #     file_path, pages="all"
-    # )  # Converting PDF to table DataFrames
-    tables = camelot.read_pdf(file_path, pages="all", split_text=True)
+    tables = camelot.read_pdf(
+        file_path, pages="all"
+    )  # Converting PDF to table DataFrames
     if len(procedure_names) != len(tables):
         # In case there's issue in capturing procedure names
         print("Error: Length of procedures and tables aren't matching")
@@ -165,7 +164,7 @@ def extract_insert_sid_star(file_name, type_):
 # Step 3: Final cleanup to remove any remaining double parentheses
                 formatted_course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', formatted_course_angle)
 
-                # print(formatted_course_angle)
+                print(formatted_course_angle)
             proc_des_obj = ProcedureDescription(
                 procedure=procedure_obj,
                 sequence_number=sequence_number,
@@ -286,7 +285,7 @@ def extract_insert_apch_27L(file_name, rwy_dir):
 # Step 3: Final cleanup to remove any remaining double parentheses
             formatted_course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', formatted_course_angle)
 
-            # print(formatted_course_angle)
+            print(formatted_course_angle)
 
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
@@ -418,7 +417,7 @@ def extract_insert_apch_09R(file_name, rwy_dir):
 # Step 3: Final cleanup to remove any remaining double parentheses
             formatted_course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', formatted_course_angle)
 
-            # print(formatted_course_angle)
+            print(formatted_course_angle)
 
         
         proc_des_obj = ProcedureDescription(
@@ -550,7 +549,7 @@ def extract_insert_apch(file_name):
 # Step 3: Final cleanup to remove any remaining double parentheses
             formatted_course_angle = re.sub(r'\(\((.*?)\)\)', r'(\1)', formatted_course_angle)
 
-            # print(formatted_course_angle)
+            print(formatted_course_angle)
 
         proc_des_obj = ProcedureDescription(
             procedure=procedure_obj,
@@ -638,7 +637,7 @@ def extract_coding_tables_vobl():
     for file_name in apch_coding_file_names:
         extract_insert_apch(file_name)
     session.commit()
-    print("Data insertion complete.")
+   
  
  
 if __name__ == "__main__":
